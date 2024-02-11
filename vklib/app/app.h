@@ -1,6 +1,8 @@
 #include "vklib/window/window.h"
 
-class VulkanApplication {
+namespace Vulkan {
+class Application {
   public:
   private:
 };
+} // namespace VkLib

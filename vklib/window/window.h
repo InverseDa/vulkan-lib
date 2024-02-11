@@ -1,5 +1,9 @@
-#pragma once
+#ifndef WINDOW_H
+#define WINDOW_H
+#define GLFW_INCLUDE_VULKAN
+
 #include "GLFW/glfw3.h"
+#include "vklib/vkInstance/vkInstance.h"
 
 #include <cstddef>
 #include <functional>
@@ -7,32 +11,20 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
-
-class Init {
-  private:
-    Init();
-
-  public:
-    static Init& GetInstance();
-    ~Init();
-};
+#include <gdiplusbitmap.h>
+#include <sstream>
 
 class WindowWrapper {
   private:
-    int m_width;
-    int m_height;
+    VkExtent2D m_size;
     std::string m_title;
 
-    std::shared_ptr<GLFWwindow> window;
+    GLFWwindow* window;
+    GLFWmonitor* monitor;
 
   public:
-    WindowWrapper(int width, int height, std::string& title);
+    WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable, std::string title = "Vulkan Application");
     ~WindowWrapper();
-    // Create a new window
-    static std::shared_ptr<WindowWrapper>
-    CreateWindow(int width = 800, int height = 600, std::string&& title = "GLFW Window");
-    // Get the raw pointer to the GLFWwindow
-    GLFWwindow* GetRawPtr() const;
     // Judge if the window should be closed
     bool IsClose() const;
     // Make the window's context current
@@ -60,10 +52,13 @@ class WindowWrapper {
     void SetInputMode(int mode, int value);
     /**************** < Set Function And Method > ****************/
 
+    void ShowTitleFPS();
+
     /**************** < Get Function And Method > ****************/
     int GetWidth() const;
     int GetHeight() const;
-    std::string GetType() const;
     std::string GetTitle() const;
     /**************** < Get Function And Method > ****************/
 };
+
+#endif

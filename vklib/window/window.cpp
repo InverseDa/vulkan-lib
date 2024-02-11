@@ -1,122 +1,155 @@
 #include "window.h"
 
-// Path: src/glfw.cpp
-Init::Init() {
-    if (!glfwInit()) { throw std::runtime_error("Failed to initialize GLFW."); }
+WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable, std::string title)
+    : m_size(size),
+      m_title(title) {
+    if (!glfwInit()) {
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to initialize GLFW!");
+    }
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, isResizable);
+    monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* pMode = glfwGetVideoMode(monitor);
+    window = fullScreen ? glfwCreateWindow(size.width, size.height, title.c_str(), monitor, nullptr)
+                        : glfwCreateWindow(size.width, size.height, title.c_str(), nullptr, nullptr);
+    if (!window) {
+        glfwTerminate();
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to initialize GLFW!");
+    }
+    // Ready to initialize Vulkan
+    // Push the required instance extensions
+#ifdef _WIN32
+    Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_surface");
+    Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_win32_surface");
+#else
+    uint32_t extensionsCount = 0;
+    const char** extensionNames;
+    extensionNames = glfwGetRequiredInstanceExtensions(&extensionsCount);
+    if (!extensionNames) {
+        glfwTerminate();
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to get required instance extensions!");
+    }
+    for (size_t i = 0; i < extensionsCount; i++) {
+        Vulkan::GraphicsBase::GetInstance().PushInstanceExtension(extensionNames[i]);
+    }
+#endif
+    // Now create the Vulkan instance
+    Vulkan::GraphicsBase::GetInstance().UseLatestApiVersion();
+    if (Vulkan::GraphicsBase::GetInstance().CreateInstance()) {
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to create Vulkan instance!");
+    }
+    // Create the window surface
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
+    if (VkResult result = glfwCreateWindowSurface(
+            Vulkan::GraphicsBase::GetInstance().GetInstanceHandle(), window, nullptr, &surface)) {
+        glfwTerminate();
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to create window surface!");
+    }
+    Vulkan::GraphicsBase::GetInstance().Surface(surface);
+    // Get the physical devices
+    if (Vulkan::GraphicsBase::GetInstance().GetPhysicalDevices() ||
+        Vulkan::GraphicsBase::GetInstance().DeterminePhysicalDevice(0, true, false) ||
+        Vulkan::GraphicsBase::GetInstance().CreateDevice()) {
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to get physical devices!");
+    }
 }
 
-Init& Init::GetInstance() {
-    static Init instance;
-    return instance;
-}
-
-Init::~Init() {
+WindowWrapper::~WindowWrapper() {
     glfwTerminate();
 }
 
-WindowWrapper::WindowWrapper(int width, int height, std::string& title)
-    : m_width(width),
-      m_height(height),
-      m_title(title),
-      window(glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr),
-             [](GLFWwindow* window) { glfwDestroyWindow(window); }) {
-    if (!window) {
-        glfwTerminate();
-        throw std::runtime_error("Failed to create GLFW window.");
+void WindowWrapper::ShowTitleFPS() {
+    static double time0 = glfwGetTime();
+    static double time1;
+    static double dt;
+    static int dframe = -1;
+    static std::stringstream info;
+    time1 = glfwGetTime();
+    dframe++;
+    if ((dt = time1 - time0) >= 1) {
+        info.precision(1);
+        info << m_title << "    " << std::fixed << dframe / dt << " FPS";
+        glfwSetWindowTitle(window, info.str().c_str());
+        info.str("");
+        time0 = time1;
+        dframe = 0;
     }
-
-    WindowWrapper::MakeContextCurrent();
-}
-
-std::shared_ptr<WindowWrapper> WindowWrapper::CreateWindow(int width, int height, std::string&& title) {
-    Init::GetInstance();
-    auto wrapper = std::make_shared<WindowWrapper>(width, height, std::move(title));
-    return wrapper;
-}
-
-WindowWrapper::~WindowWrapper() { // TODO: 关闭窗口
-}
-
-GLFWwindow* WindowWrapper::GetRawPtr() const {
-    return window.get();
 }
 
 bool WindowWrapper::IsClose() const {
-    return glfwWindowShouldClose(window.get());
+    return glfwWindowShouldClose(window);
 }
 
 void WindowWrapper::MakeContextCurrent() const {
-    glfwMakeContextCurrent(window.get());
+    glfwMakeContextCurrent(window);
 }
 
 void WindowWrapper::SetKeyCallback(GLFWkeyfun callback) {
-    glfwSetKeyCallback(window.get(), callback);
+    glfwSetKeyCallback(window, callback);
 }
 
 void WindowWrapper::SetMouseButtonCallback(GLFWmousebuttonfun callback) {
-    glfwSetMouseButtonCallback(window.get(), callback);
+    glfwSetMouseButtonCallback(window, callback);
 }
 
 void WindowWrapper::SetCursorPosCallback(GLFWcursorposfun callback) {
-    glfwSetCursorPosCallback(window.get(), callback);
+    glfwSetCursorPosCallback(window, callback);
 }
 
 void WindowWrapper::SetScrollCallback(GLFWscrollfun callback) {
-    glfwSetScrollCallback(window.get(), callback);
+    glfwSetScrollCallback(window, callback);
 }
 
 void WindowWrapper::SetFramebufferSizeCallback(GLFWframebuffersizefun callback) {
-    glfwSetFramebufferSizeCallback(window.get(), callback);
+    glfwSetFramebufferSizeCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowCloseCallback(GLFWwindowclosefun callback) {
-    glfwSetWindowCloseCallback(window.get(), callback);
+    glfwSetWindowCloseCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowRefreshCallback(GLFWwindowrefreshfun callback) {
-    glfwSetWindowRefreshCallback(window.get(), callback);
+    glfwSetWindowRefreshCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowFocusCallback(GLFWwindowfocusfun callback) {
-    glfwSetWindowFocusCallback(window.get(), callback);
+    glfwSetWindowFocusCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowIconifyCallback(GLFWwindowiconifyfun callback) {
-    glfwSetWindowIconifyCallback(window.get(), callback);
+    glfwSetWindowIconifyCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowMaximizeCallback(GLFWwindowmaximizefun callback) {
-    glfwSetWindowMaximizeCallback(window.get(), callback);
+    glfwSetWindowMaximizeCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowContentScaleCallback(GLFWwindowcontentscalefun callback) {
-    glfwSetWindowContentScaleCallback(window.get(), callback);
+    glfwSetWindowContentScaleCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowPosCallback(GLFWwindowposfun callback) {
-    glfwSetWindowPosCallback(window.get(), callback);
+    glfwSetWindowPosCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowSizeCallback(GLFWwindowsizefun callback) {
-    glfwSetWindowSizeCallback(window.get(), callback);
+    glfwSetWindowSizeCallback(window, callback);
 }
 
 void WindowWrapper::SetWindowAspectRatioCallback(GLFWwindowsizefun callback) {
-    glfwSetWindowSizeCallback(window.get(), callback);
+    glfwSetWindowSizeCallback(window, callback);
 }
 
 void WindowWrapper::SetInputMode(int mode, int value) {
-    glfwSetInputMode(window.get(), mode, value);
+    glfwSetInputMode(window, mode, value);
 }
 
 int WindowWrapper::GetWidth() const {
-    return m_width;
+    return m_size.width;
 }
 
 int WindowWrapper::GetHeight() const {
-    return m_height;
+    return m_size.height;
 }
 
 std::string WindowWrapper::GetTitle() const {
@@ -124,7 +157,7 @@ std::string WindowWrapper::GetTitle() const {
 }
 
 void WindowWrapper::SwapBuffers() const {
-    glfwSwapBuffers(window.get());
+    glfwSwapBuffers(window);
 }
 
 void WindowWrapper::PollEvents() const {
