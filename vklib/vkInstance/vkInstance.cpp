@@ -53,7 +53,50 @@ VkResult GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
     }
     std::vector<VkQueueFamilyProperties> queueFamilyPropertieses(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyPropertieses.data());
-    // TODO: optimize the code
+
+    auto& [ig, ip, ic] = queueFamilyIndices;
+    ig = ip = ic = VK_QUEUE_FAMILY_IGNORED;
+    for (uint32_t i = 0; i < queueFamilyCount; i++) {
+        VkBool32 supportGraphics = enableGraphicsQueue && queueFamilyPropertieses[i].queueFlags & VK_QUEUE_GRAPHICS_BIT,
+                 supportPresentation = false,
+                 supportCompute = enableComputeQueue && queueFamilyPropertieses[i].queueFlags & VK_QUEUE_COMPUTE_BIT;
+        if (surface) {
+            if (VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &supportPresentation)) {
+                std::cout << std::format("[GraphicsBase][ERROR] Failed to determine if the queue family supports presentation! Error code: {}\n", int32_t(result));
+                return result;
+            }
+        }
+        if (supportGraphics && supportCompute) {
+            if (supportPresentation) {
+                ig = ip = ic = i;
+                break;
+            }
+            if (ig != ic || ig == VK_QUEUE_FAMILY_IGNORED) {
+                ig = ic = i;
+            }
+            if (!surface) {
+                break;
+            }
+        }
+        if (supportGraphics && ig == VK_QUEUE_FAMILY_IGNORED) {
+            ig = i;
+        }
+        if (supportPresentation && ip == VK_QUEUE_FAMILY_IGNORED) {
+            ip = i;
+        }
+        if (supportCompute && ic == VK_QUEUE_FAMILY_IGNORED) {
+            ic = i;
+        }
+    }
+    if (ig == VK_QUEUE_FAMILY_IGNORED && enableGraphicsQueue ||
+        ip == VK_QUEUE_FAMILY_IGNORED && surface ||
+        ic == VK_QUEUE_FAMILY_IGNORED && enableComputeQueue) {
+        return VK_RESULT_MAX_ENUM;
+    }
+    queueFamilyIndexGraphics = ig;
+    queueFamilyIndexPresentation = ip;
+    queueFamilyIndexCompute = ic;
+    return VK_SUCCESS;
 }
 
 VkResult GraphicsBase::CreateSwapChainInternal() {}
@@ -321,7 +364,46 @@ VkResult GraphicsBase::GetPhysicalDevices() {
 
 VkResult
 GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQueue, bool enableComputeQueue) {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    static constexpr uint32_t notFound = INT32_MAX;
+    struct queueFamilyIndexCombination {
+        uint32_t graphics = VK_QUEUE_FAMILY_IGNORED;
+        uint32_t presentation = VK_QUEUE_FAMILY_IGNORED;
+        uint32_t compute = VK_QUEUE_FAMILY_IGNORED;
+    };
+    static std::vector<queueFamilyIndexCombination> queueFamilyIndexCombinations(availablePhysicalDevices.size());
+    auto& [ig, ip, ic] = queueFamilyIndexCombinations[deviceIndex];
+
+    if (ig == notFound && enableGraphicsQueue ||
+        ip == notFound && surface ||
+        ic == notFound && enableComputeQueue) {
+        return VK_RESULT_MAX_ENUM;
+    }
+    if (ig == VK_QUEUE_FAMILY_IGNORED && enableGraphicsQueue ||
+        ip == VK_QUEUE_FAMILY_IGNORED && surface ||
+        ic == VK_QUEUE_FAMILY_IGNORED && enableComputeQueue) {
+        uint32_t indices[3];
+        VkResult result = GetQueueFamilyIndices(availablePhysicalDevices[deviceIndex], enableGraphicsQueue, enableComputeQueue, indices);
+        if (result == VK_SUCCESS ||
+            result == VK_RESULT_MAX_ENUM) {
+            if (enableGraphicsQueue)
+                ig = indices[0] & INT32_MAX;
+            if (surface)
+                ip = indices[1] & INT32_MAX;
+            if (enableComputeQueue)
+                ic = indices[2] & INT32_MAX;
+        }
+        if (result) {
+            return result;
+        }
+    }
+
+    else {
+        queueFamilyIndexGraphics = enableGraphicsQueue ? ig : VK_QUEUE_FAMILY_IGNORED;
+        queueFamilyIndexPresentation = surface ? ip : VK_QUEUE_FAMILY_IGNORED;
+        queueFamilyIndexCompute = enableComputeQueue ? ic : VK_QUEUE_FAMILY_IGNORED;
+    }
+    physicalDevice = availablePhysicalDevices[deviceIndex];
+    return VK_SUCCESS;
 }
 
 VkResult GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
