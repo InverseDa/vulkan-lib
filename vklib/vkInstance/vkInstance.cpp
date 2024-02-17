@@ -99,7 +99,9 @@ VkResult GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::CreateSwapChainInternal() {}
+VkResult GraphicsBase::CreateSwapChainInternal() {
+    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+}
 
 // ==================================================
 // Public
@@ -395,9 +397,7 @@ GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQ
         if (result) {
             return result;
         }
-    }
-
-    else {
+    } else {
         queueFamilyIndexGraphics = enableGraphicsQueue ? ig : VK_QUEUE_FAMILY_IGNORED;
         queueFamilyIndexPresentation = surface ? ip : VK_QUEUE_FAMILY_IGNORED;
         queueFamilyIndexCompute = enableComputeQueue ? ic : VK_QUEUE_FAMILY_IGNORED;
@@ -407,7 +407,66 @@ GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQ
 }
 
 VkResult GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    float queuePriority = 1.f;
+    VkDeviceQueueCreateInfo queueCreateInfo[3] = {
+        {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+         .queueFamilyIndex = queueFamilyIndexGraphics,
+         .queueCount = 1,
+         .pQueuePriorities = &queuePriority},
+        {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+         .queueFamilyIndex = queueFamilyIndexPresentation,
+         .queueCount = 1,
+         .pQueuePriorities = &queuePriority},
+        {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+         .queueFamilyIndex = queueFamilyIndexCompute,
+         .queueCount = 1,
+         .pQueuePriorities = &queuePriority}};
+    uint32_t queueCreateInfoCount = 0;
+    if (queueFamilyIndexGraphics != VK_QUEUE_FAMILY_IGNORED) {
+        queueCreateInfo[queueCreateInfoCount++].queueFamilyIndex = queueFamilyIndexGraphics;
+    }
+    if (queueFamilyIndexPresentation != VK_QUEUE_FAMILY_IGNORED &&
+        queueFamilyIndexGraphics != queueFamilyIndexPresentation) {
+        queueCreateInfo[queueCreateInfoCount++].queueFamilyIndex = queueFamilyIndexPresentation;
+    }
+    if (queueFamilyIndexCompute != VK_QUEUE_FAMILY_IGNORED &&
+        queueFamilyIndexCompute != queueFamilyIndexGraphics &&
+        queueFamilyIndexCompute != queueFamilyIndexPresentation) {
+        queueCreateInfo[queueCreateInfoCount++].queueFamilyIndex = queueFamilyIndexCompute;
+    }
+    // Get the physical device features
+    VkPhysicalDeviceFeatures physicalDeviceFeatures;
+    vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+    // Create the logical device
+    VkDeviceCreateInfo deviceCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = pNext,
+        .flags = flags,
+        .queueCreateInfoCount = queueCreateInfoCount,
+        .pQueueCreateInfos = queueCreateInfo,
+        .enabledExtensionCount = uint32_t(deviceExtensions.size()),
+        .ppEnabledExtensionNames = deviceExtensions.data(),
+        .pEnabledFeatures = &physicalDeviceFeatures};
+    if (VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to create a logical device! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    // Get the queue handles
+    if (queueFamilyIndexGraphics != VK_QUEUE_FAMILY_IGNORED) {
+        vkGetDeviceQueue(device, queueFamilyIndexGraphics, 0, &queueGraphics);
+    }
+    if (queueFamilyIndexPresentation != VK_QUEUE_FAMILY_IGNORED) {
+        vkGetDeviceQueue(device, queueFamilyIndexPresentation, 0, &queuePresentation);
+    }
+    if (queueFamilyIndexCompute != VK_QUEUE_FAMILY_IGNORED) {
+        vkGetDeviceQueue(device, queueFamilyIndexCompute, 0, &queueCompute);
+    }
+    vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
+    // Print the physical device's name
+    std::cout << std::format("[INFO] Physical Device: {}\n", physicalDeviceProperties.deviceName);
+
+    return VK_SUCCESS;
 }
 
 VkResult GraphicsBase::CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
