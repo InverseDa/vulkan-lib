@@ -16,7 +16,7 @@ class GraphicsBase {
     // Singleton
     static GraphicsBase singleton;
     // Constructor and destructor
-    GraphicsBase()               = default;
+    GraphicsBase() = default;
     GraphicsBase(GraphicsBase&&) = delete;
     ~GraphicsBase();
 
@@ -41,9 +41,9 @@ class GraphicsBase {
     // vk logical device
     VkDevice device;
     //// three queue families: graphics, presentation, and compute
-    uint32_t queueFamilyIndexGraphics     = VK_QUEUE_FAMILY_IGNORED;
+    uint32_t queueFamilyIndexGraphics = VK_QUEUE_FAMILY_IGNORED;
     uint32_t queueFamilyIndexPresentation = VK_QUEUE_FAMILY_IGNORED;
-    uint32_t queueFamilyIndexCompute      = VK_QUEUE_FAMILY_IGNORED;
+    uint32_t queueFamilyIndexCompute = VK_QUEUE_FAMILY_IGNORED;
     VkQueue queueGraphics;
     VkQueue queuePresentation;
     VkQueue queueCompute;
@@ -64,6 +64,11 @@ class GraphicsBase {
     // save the swap chain's create info to recreate the swap chain conveniently
     VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
     VkResult CreateSwapChainInternal();
+    // callback function vector
+    std::vector<void (*)()> callbacksCreateSwapChain;
+    std::vector<void (*)()> callbacksDestroySwapChain;
+    std::vector<void (*)()> callbacksCreateDevice;
+    std::vector<void (*)()> callbacksDestroyDevice;
 
   public:
     static GraphicsBase& GetInstance();
@@ -130,6 +135,10 @@ class GraphicsBase {
     // Functions when the logical device is failed to create
     VkResult CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
     void DeviceExtensions(const std::vector<const char*>& extensionNames);
+    // Functions that recreate device
+    VkResult RecreateDevice(const void* pNext = nullptr, VkDeviceCreateFlags flags = 0);
+    // Functions that wait device until idle
+    VkResult WaitDeviceIdle();
 
     // Functions that set the surface format
     VkResult SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat);
@@ -138,6 +147,13 @@ class GraphicsBase {
     CreateSwapChain(bool limitFrameRate = true, const void* pNext = nullptr, VkSwapchainCreateFlagsKHR flags = 0);
     // Functions that recreate the swap chain
     VkResult RecreateSwapChain();
+    // Callback functions
+    void AddCallbackCreateSwapChain(void (*callback)());
+    void AddCallbackDestroySwapChain(void (*callback)());
+    void AddCallbackCreateDevice(void (*callback)());
+    void AddCallbackDestroyDevice(void (*callback)());
+    // Functions that terminate vulkan instance when the program is running
+    void Terminate();
 };
 } // namespace Vulkan
 

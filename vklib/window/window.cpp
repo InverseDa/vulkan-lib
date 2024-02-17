@@ -1,6 +1,6 @@
 #include "window.h"
 
-WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable, std::string title)
+WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable, bool limitFrameRate, std::string title)
     : m_size(size),
       m_title(title) {
     if (!glfwInit()) {
@@ -21,6 +21,7 @@ WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable,
 #ifdef _WIN32
     Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_surface");
     Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_win32_surface");
+    Vulkan::GraphicsBase::GetInstance().PushDeviceExtension("VK_KHR_swapchain");
 #else
     uint32_t extensionsCount = 0;
     const char** extensionNames;
@@ -52,9 +53,14 @@ WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable,
         Vulkan::GraphicsBase::GetInstance().CreateDevice()) {
         throw std::runtime_error("[WindowWrapper][ERROR] Failed to get physical devices!");
     }
+    // Get the swap chain
+    if (Vulkan::GraphicsBase::GetInstance().CreateSwapChain(limitFrameRate)) {
+        throw std::runtime_error("[WindowWrapper][ERROR] Failed to create swap chain!");
+    }
 }
 
 WindowWrapper::~WindowWrapper() {
+    Vulkan::GraphicsBase::GetInstance().WaitDeviceIdle();
     glfwTerminate();
 }
 

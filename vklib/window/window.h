@@ -22,7 +22,7 @@ class WindowWrapper {
     GLFWmonitor* monitor;
 
   public:
-    WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable, std::string title = "Vulkan Application");
+    WindowWrapper(VkExtent2D size, bool fullScreen = false, bool isResizable = true, bool limitFrameRate = true, std::string title = "Vulkan Application");
     ~WindowWrapper();
     // Judge if the window should be closed
     bool IsClose() const;

@@ -6,7 +6,40 @@ namespace Vulkan {
 // ==================================================
 inline GraphicsBase GraphicsBase::singleton;
 
-GraphicsBase::~GraphicsBase() {}
+GraphicsBase::~GraphicsBase() {
+    if (!instance) {
+        return;
+    }
+    if (device) {
+        WaitDeviceIdle();
+        if (swapChain) {
+            for (auto& i : callbacksDestroySwapChain) {
+                i();
+            }
+            for (auto& i : swapChainImageViews) {
+                if (i) {
+                    vkDestroyImageView(device, i, nullptr);
+                }
+            }
+            vkDestroySwapchainKHR(device, swapChain, nullptr);
+        }
+        for (auto& i : callbacksDestroyDevice) {
+            i();
+        }
+        vkDestroyDevice(device, nullptr);
+    }
+    if (surface) {
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+    }
+    if (debugUtilsMessenger) {
+        PFN_vkDestroyDebugUtilsMessengerEXT DestroyDebugUtilsMessenger =
+            reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+        if (DestroyDebugUtilsMessenger) {
+            DestroyDebugUtilsMessenger(instance, debugUtilsMessenger, nullptr);
+        }
+    }
+    vkDestroyInstance(instance, nullptr);
+}
 
 void GraphicsBase::AddLayerOrExtension(std::vector<const char*>& container, const char* name) {
     for (auto& item : container) {
@@ -22,7 +55,7 @@ VkResult GraphicsBase::CreateDebugMessenger() {
                                                                                  VkDebugUtilsMessageTypeFlagsEXT messageTypes,
                                                                                  const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                                                                  void* pUserData) -> VkBool32 {
-        std::cout << std::format("{}\n\n", pCallbackData->pMessage);
+        std::cout << std::format("[DEBUG] {}\n\n", pCallbackData->pMessage);
         return VK_FALSE;
     };
     VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {
@@ -100,7 +133,36 @@ VkResult GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
 }
 
 VkResult GraphicsBase::CreateSwapChainInternal() {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    if (VkResult result = vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to create a swap chain! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    // Create SwapChain images
+    uint32_t swapChainImageCount;
+    if (VkResult result = vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, nullptr)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of swap chain images! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    swapChainImages.resize(swapChainImageCount);
+    if (VkResult result = vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, swapChainImages.data())) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the swap chain images! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    // Create image views
+    swapChainImageViews.resize(swapChainImageCount);
+    VkImageViewCreateInfo imageViewCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = swapChainCreateInfo.imageFormat,
+        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
+    for (size_t i = 0; i < swapChainImageCount; i++) {
+        imageViewCreateInfo.image = swapChainImages[i];
+        if (VkResult result = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i])) {
+            std::cout << std::format("[GraphicsBase][ERROR] Failed to create the image view of swap chain image! Error code: {}\n", int32_t(result));
+            return result;
+        }
+    }
+    return VK_SUCCESS;
 }
 
 // ==================================================
@@ -215,7 +277,20 @@ const VkSwapchainCreateInfoKHR& GraphicsBase::GetSwapChainCreateInfo() const {
 }
 
 VkResult GraphicsBase::GetSurfaceFormats() {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    uint32_t surfaceFormatCount;
+    if (VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of surface formats! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    if (!surfaceFormatCount) {
+        throw std::runtime_error("[GraphicsBase][ERROR] Failed to find any surface format!");
+    }
+    availableSurfaceFormats.resize(surfaceFormatCount);
+    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, availableSurfaceFormats.data());
+    if (result) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface formats! Error code: {}\n", int32_t(result));
+    }
+    return result;
 }
 
 VkResult GraphicsBase::UseLatestApiVersion() {
@@ -465,7 +540,10 @@ VkResult GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
     // Print the physical device's name
     std::cout << std::format("[INFO] Physical Device: {}\n", physicalDeviceProperties.deviceName);
-
+    // call callbacks
+    for (auto& i : callbacksCreateDevice) {
+        i();
+    }
     return VK_SUCCESS;
 }
 
@@ -478,14 +556,232 @@ void GraphicsBase::DeviceExtensions(const std::vector<const char*>& extensionNam
 }
 
 VkResult GraphicsBase::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    bool formatIsAvailable = false;
+    // colorspace default is VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, is SRGB, a standard colorspace
+    if (!surfaceFormat.format) {
+        // If specified colorspace and not specified format
+        for (auto& i : availableSurfaceFormats) {
+            if (i.colorSpace == surfaceFormat.colorSpace) {
+                swapChainCreateInfo.imageFormat = i.format;
+                swapChainCreateInfo.imageColorSpace = i.colorSpace;
+                formatIsAvailable = true;
+                break;
+            }
+        }
+    } else {
+        for (auto& i : availableSurfaceFormats) {
+            if (i.format == surfaceFormat.format && i.colorSpace == surfaceFormat.colorSpace) {
+                swapChainCreateInfo.imageFormat = i.format;
+                swapChainCreateInfo.imageColorSpace = i.colorSpace;
+                formatIsAvailable = true;
+                break;
+            }
+        }
+    }
+    if (!formatIsAvailable) {
+        return VK_ERROR_FORMAT_NOT_SUPPORTED;
+    }
+    // This function maybe called when rendering(eg. switch to HDR), so recreate the swap chain is necessary
+    if (swapChain) {
+        return RecreateSwapChain();
+    }
+    return VK_SUCCESS;
 }
 
 VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, VkSwapchainCreateFlagsKHR flags) {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    if (VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface capabilities! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    swapChainCreateInfo.minImageCount = surfaceCapabilities.minImageCount + (surfaceCapabilities.maxImageCount > surfaceCapabilities.minImageCount);
+    swapChainCreateInfo.imageExtent = surfaceCapabilities.currentExtent.width == -1 ? VkExtent2D{surfaceCapabilities.minImageExtent.width, surfaceCapabilities.minImageExtent.height} : surfaceCapabilities.currentExtent;
+    swapChainCreateInfo.imageArrayLayers = 1; // view count, default is 1
+    swapChainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
+    //== Set the composite alpha
+    //== If the composite alpha is supported, use VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
+    //== Else, use the first supported composite alpha
+    if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) {
+        swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+    } else {
+        for (size_t i = 0; i < 4; i++) {
+            if (surfaceCapabilities.supportedCompositeAlpha & (1 << i)) {
+                swapChainCreateInfo.compositeAlpha = VkCompositeAlphaFlagBitsKHR(surfaceCapabilities.supportedCompositeAlpha & 1 << i);
+                break;
+            }
+        }
+    }
+    // SwapChain imageUsage
+    // SRC: read from the image, such as user can screenshot vk app window when the image usage is VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+    // DST: write to the image, such as developer can clear the window color when the image usage is VK_IMAGE_USAGE_TRANSFER_DST_BIT
+    swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) {
+        swapChainCreateInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    }
+    if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT) {
+        swapChainCreateInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    } else {
+        std::cout << "[GraphicsBase][WARNING] VK_IMAGE_USAGE_TRANSFER_DST_BIT is not supported by the surface!\n";
+    }
+    if (availableSurfaceFormats.empty()) {
+        if (VkResult result = GetSurfaceFormats()) {
+            return result;
+        }
+    }
+    // if the surface format is not specified, call SetSurfaceFormat() function to set the default format
+    if (!swapChainCreateInfo.imageFormat) {
+        if (SetSurfaceFormat({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}) &&
+            SetSurfaceFormat({VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})) {
+            // if the surface format is not specified and the default format is not available
+            // use the first available format
+            swapChainCreateInfo.imageFormat = availableSurfaceFormats[0].format;
+            swapChainCreateInfo.imageColorSpace = availableSurfaceFormats[0].colorSpace;
+            std::cout << std::format("[GraphicsBase][WARNING] Failed to select a four-component UNORM surface format! Use the first available format!\n");
+        }
+    }
+    // present mode
+    uint32_t surfacePresentModeCount;
+    if (VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &surfacePresentModeCount, nullptr)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of surface present modes! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    if (!surfacePresentModeCount) {
+        throw std::runtime_error("[GraphicsBase][ERROR] Failed to find any surface present mode!");
+    }
+    std::vector<VkPresentModeKHR> surfacePresentModes(surfacePresentModeCount);
+    if (VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &surfacePresentModeCount, surfacePresentModes.data())) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface present modes! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    // default present mode is VK_PRESENT_MODE_FIFO_KHR
+    // if limitFrameRate is false, use VK_PRESENT_MODE_MAILBOX_KHR
+    swapChainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    if (!limitFrameRate) {
+        for (size_t i = 0; i < surfacePresentModeCount; i++) {
+            if (surfacePresentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
+                swapChainCreateInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+                break;
+            }
+        }
+    }
+    // rest of the swap chain create info
+    swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapChainCreateInfo.pNext = pNext;
+    swapChainCreateInfo.flags = flags;
+    swapChainCreateInfo.surface = surface;
+    swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapChainCreateInfo.clipped = VK_TRUE;
+    // Create the swap chain
+    if (VkResult result = CreateSwapChainInternal()) {
+        return result;
+    }
+    // Call the callbacks
+    for (auto& i : callbacksCreateSwapChain) {
+        i();
+    }
+    return VK_SUCCESS;
 }
 
 VkResult GraphicsBase::RecreateSwapChain() {
-    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    if (VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface capabilities! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    if (surfaceCapabilities.currentExtent.width == 0 ||
+        surfaceCapabilities.currentExtent.height == 0)
+        return VK_SUCCESS;
+    swapChainCreateInfo.imageExtent = surfaceCapabilities.currentExtent;
+    swapChainCreateInfo.oldSwapchain = swapChain;
+    // before destroy the old swap chain, wait for the graphics queue to be idle
+    VkResult result = vkQueueWaitIdle(queueGraphics);
+    if (result == VK_SUCCESS && queueGraphics != queuePresentation) {
+        result = vkQueueWaitIdle(queuePresentation);
+    }
+    if (result) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to wait for the graphics queue to be idle! Error code: {}\n", int32_t(result));
+        return result;
+    }
+    // destroy the old swap chain
+    for (auto& i : swapChainImageViews) {
+        if (i) {
+            vkDestroyImageView(device, i, nullptr);
+        }
+    }
+    swapChainImageViews.resize(0);
+    if (result = CreateSwapChainInternal()) {
+        return result;
+    }
+    // Call the callbacks
+    for (auto& i : callbacksDestroySwapChain) {
+        i();
+    }
+    return VK_SUCCESS;
 }
+
+void GraphicsBase::AddCallbackCreateSwapChain(void (*callback)()) {
+    callbacksCreateSwapChain.push_back(callback);
+}
+
+void GraphicsBase::AddCallbackDestroySwapChain(void (*callback)()) {
+    callbacksDestroySwapChain.push_back(callback);
+}
+
+void GraphicsBase::AddCallbackCreateDevice(void (*callback)()) {
+    callbacksCreateDevice.push_back(callback);
+}
+
+void GraphicsBase::AddCallbackDestroyDevice(void (*callback)()) {
+    callbacksDestroyDevice.push_back(callback);
+}
+
+VkResult GraphicsBase::RecreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
+    if (VkResult result = WaitDeviceIdle()) {
+        return result;
+    }
+    if (swapChain) {
+        for (auto& i : callbacksDestroyDevice) {
+            i();
+        }
+        for (auto& i : swapChainImageViews) {
+            if (i) {
+                vkDestroyImageView(device, i, nullptr);
+            }
+        }
+        swapChainImageViews.resize(0);
+        vkDestroySwapchainKHR(device, swapChain, nullptr);
+        swapChain = VK_NULL_HANDLE;
+        swapChainCreateInfo = {};
+    }
+    for (auto& i : callbacksDestroyDevice) {
+        i();
+    }
+    if (device) {
+        vkDestroyDevice(device, nullptr);
+        device = VK_NULL_HANDLE;
+    }
+    return CreateDevice(pNext, flags);
+}
+
+VkResult GraphicsBase::WaitDeviceIdle() {
+    VkResult result = vkDeviceWaitIdle(device);
+    if (result) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to wait for the device to be idle! Error code: {}\n", int32_t(result));
+    }
+    return result;
+}
+
+void GraphicsBase::Terminate() {
+    this->~GraphicsBase();
+    instance = VK_NULL_HANDLE;
+    physicalDevice = VK_NULL_HANDLE;
+    device = VK_NULL_HANDLE;
+    surface = VK_NULL_HANDLE;
+    swapChain = VK_NULL_HANDLE;
+    swapChainImages.resize(0);
+    swapChainImageViews.resize(0);
+    swapChainCreateInfo = {};
+    debugUtilsMessenger = VK_NULL_HANDLE;
+}
+
 } // namespace Vulkan
