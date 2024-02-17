@@ -3,6 +3,8 @@
 
 #include "vulkan/vulkan.h"
 
+#define VK_RESULT_THROW
+
 #ifdef VK_RESULT_THROW
 class ResultType {
   public:
@@ -23,10 +25,16 @@ class ResultType {
         return result;
     };
 
+    ResultType& operator=(ResultType&& other) noexcept {
+        result = other.result;
+        other.result = VK_SUCCESS;
+        return *this;
+    }
+
   private:
     VkResult result;
 };
-inline void (*ResultType::callback_throw)(VkResult);
+inline void (*ResultType::callbackThrow)(VkResult);
 
 #elif defined VK_RESULT_NODISCARD
 struct [[nodiscard]] ResultType {
