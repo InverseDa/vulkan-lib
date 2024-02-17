@@ -21,6 +21,7 @@ WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable,
 #ifdef _WIN32
     Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_surface");
     Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_win32_surface");
+    // temp fix for the swap chain extension, should be removed after the swap chain is implemented
     Vulkan::GraphicsBase::GetInstance().PushDeviceExtension("VK_KHR_swapchain");
 #else
     uint32_t extensionsCount = 0;
