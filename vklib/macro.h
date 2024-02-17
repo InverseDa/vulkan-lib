@@ -23,13 +23,13 @@
 
 // Copy Vulkan object handler
 #define DefineHandleTypeOperator        \
-    operator decltype(handle)() const { \
+    operator auto() const { \
         return handle;                  \
     }
 
 // Get handle address
 #define DefineAddressFunction                 \
-    const decltype(handle)* Address() const { \
+    auto Address() const { \
         return &handle;                       \
     }
 

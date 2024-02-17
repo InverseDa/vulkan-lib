@@ -2,6 +2,9 @@
 #define VULKAN_LIB_FENCE_H
 
 #include "vulkan/vulkan.h"
+#include "macro.h"
+#include "type/vkResult.h"
+#include "type/ostream.h"
 
 namespace Vulkan {
 class Fence {
@@ -9,22 +12,26 @@ class Fence {
     Fence() = default;
     Fence(VkFenceCreateInfo& createInfo);
     Fence(VkFenceCreateFlags flags = 0);
-    Fence(Fence&&) noexcept;
+    Fence(Fence&& other) noexcept;
     ~Fence();
 
     Fence& operator=(const Fence&) = delete;
     Fence& operator=(Fence&&) = delete;
 
-    void CreateFence();
-    void DestroyFence();
-    void ResetFence();
-    void WaitFence();
-    void WaitFenceWithTimeout(uint64_t timeout);
-    void GetFenceStatus();
-    void GetFenceStatusWithTimeout(uint64_t timeout);
+    // Getter
+    DefineHandleTypeOperator;
+    DefineAddressFunction;
+
+    ResultType Wait() const;
+    ResultType Reset() const;
+    ResultType WaitAndReset() const;
+    ResultType GetStatus() const;
+
+    ResultType Create(VkFenceCreateInfo& createInfo);
+    ResultType Create(VkFenceCreateFlags flags = 0);
 
   private:
-    VkFence fence;
+    VkFence handle = VK_NULL_HANDLE;
 };
 } // namespace Vulkan
 
