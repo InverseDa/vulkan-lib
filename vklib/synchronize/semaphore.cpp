@@ -1,4 +1,4 @@
-#include "synchronize/semaphore.h"
+#include "semaphore.h"
 
 namespace Vulkan {
 

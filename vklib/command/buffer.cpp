@@ -1,3 +1,40 @@
-//
-// Created by miaokeda on 2024/2/18.
-//
+#include "buffer.h"
+
+namespace Vulkan {
+CommandBuffer::CommandBuffer(CommandBuffer&& other) noexcept {
+    MoveHandle;
+}
+
+ResultType CommandBuffer::Begin(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo) const {
+    inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = usageFlags,
+        .pInheritanceInfo = &inheritanceInfo};
+    VkResult result = vkBeginCommandBuffer(handle, &beginInfo);
+    if (result) {
+        outStream << std::format("[CommandBuffer][ERROR] Failed to begin a command buffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
+    }
+    return result;
+}
+
+ResultType CommandBuffer::Begin(VkCommandBufferUsageFlags usageFlags) const {
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = usageFlags};
+    VkResult result = vkBeginCommandBuffer(handle, &beginInfo);
+    if (result) {
+        outStream << std::format("[CommandBuffer][ERROR] Failed to begin a command buffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
+    }
+    return result;
+}
+
+ResultType CommandBuffer::End() const {
+    VkResult result = vkEndCommandBuffer(handle);
+    if (result) {
+        outStream << std::format("[CommandBuffer][ERROR] Failed to end a command buffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
+    }
+    return result;
+}
+
+} // namespace Vulkan

@@ -1,4 +1,4 @@
-#include "synchronize/fence.h"
+#include "fence.h"
 
 namespace Vulkan {
 
