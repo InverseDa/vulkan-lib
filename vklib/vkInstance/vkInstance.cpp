@@ -50,7 +50,7 @@ void GraphicsBase::AddLayerOrExtension(std::vector<const char*>& container, cons
     container.push_back(name);
 }
 
-VkResult GraphicsBase::CreateDebugMessenger() {
+ResultType GraphicsBase::CreateDebugMessenger() {
     static PFN_vkDebugUtilsMessengerCallbackEXT DebugUtilsMessengerCallback = [](VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                                                  VkDebugUtilsMessageTypeFlagsEXT messageTypes,
                                                                                  const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -65,7 +65,7 @@ VkResult GraphicsBase::CreateDebugMessenger() {
         .pfnUserCallback = DebugUtilsMessengerCallback};
     PFN_vkCreateDebugUtilsMessengerEXT CreateDebugUtilsMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
     if (CreateDebugUtilsMessenger) {
-        VkResult result = CreateDebugUtilsMessenger(instance, &debugUtilsMessengerCreateInfo, nullptr, &debugUtilsMessenger);
+        ResultType result = CreateDebugUtilsMessenger(instance, &debugUtilsMessengerCreateInfo, nullptr, &debugUtilsMessenger);
         if (result) {
             std::cout << std::format("[GraphicsBase][ERROR] Failed to create a debug messenger! Error: {}({})\n", string_VkResult(result), int32_t(result));
         }
@@ -75,10 +75,10 @@ VkResult GraphicsBase::CreateDebugMessenger() {
     return VK_RESULT_MAX_ENUM;
 }
 
-VkResult GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
-                                             bool enableGraphicsQueue,
-                                             bool enableComputeQueue,
-                                             uint32_t (&queueFamilyIndices)[3]) {
+ResultType GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
+                                               bool enableGraphicsQueue,
+                                               bool enableComputeQueue,
+                                               uint32_t (&queueFamilyIndices)[3]) {
     uint32_t queueFamilyCount;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
     if (!queueFamilyCount) {
@@ -94,7 +94,7 @@ VkResult GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
                  supportPresentation = false,
                  supportCompute = enableComputeQueue && queueFamilyPropertieses[i].queueFlags & VK_QUEUE_COMPUTE_BIT;
         if (surface) {
-            if (VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &supportPresentation)) {
+            if (ResultType result = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &supportPresentation)) {
                 std::cout << std::format("[GraphicsBase][ERROR] Failed to determine if the queue family supports presentation! Error: {}({})\n", string_VkResult(result), int32_t(result));
                 return result;
             }
@@ -132,19 +132,19 @@ VkResult GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::CreateSwapChainInternal() {
-    if (VkResult result = vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain)) {
+ResultType GraphicsBase::CreateSwapChainInternal() {
+    if (ResultType result = vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to create a swap chain! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
     // Create SwapChain images
     uint32_t swapChainImageCount;
-    if (VkResult result = vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, nullptr)) {
+    if (ResultType result = vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of swap chain images! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
     swapChainImages.resize(swapChainImageCount);
-    if (VkResult result = vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, swapChainImages.data())) {
+    if (ResultType result = vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, swapChainImages.data())) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the swap chain images! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -157,7 +157,7 @@ VkResult GraphicsBase::CreateSwapChainInternal() {
         .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
     for (size_t i = 0; i < swapChainImageCount; i++) {
         imageViewCreateInfo.image = swapChainImages[i];
-        if (VkResult result = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i])) {
+        if (ResultType result = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i])) {
             std::cout << std::format("[GraphicsBase][ERROR] Failed to create the image view of swap chain image! Error: {}({})\n", string_VkResult(result), int32_t(result));
             return result;
         }
@@ -276,9 +276,9 @@ const VkSwapchainCreateInfoKHR& GraphicsBase::GetSwapChainCreateInfo() const {
     return swapChainCreateInfo;
 }
 
-VkResult GraphicsBase::GetSurfaceFormats() {
+ResultType GraphicsBase::GetSurfaceFormats() {
     uint32_t surfaceFormatCount;
-    if (VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr)) {
+    if (ResultType result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of surface formats! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -286,14 +286,14 @@ VkResult GraphicsBase::GetSurfaceFormats() {
         throw std::runtime_error("[GraphicsBase][ERROR] Failed to find any surface format!");
     }
     availableSurfaceFormats.resize(surfaceFormatCount);
-    VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, availableSurfaceFormats.data());
+    ResultType result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, availableSurfaceFormats.data());
     if (result) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface formats! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
     return result;
 }
 
-VkResult GraphicsBase::UseLatestApiVersion() {
+ResultType GraphicsBase::UseLatestApiVersion() {
     if (vkGetInstanceProcAddr(VK_NULL_HANDLE, "vkEnumerateInstanceVersion") != nullptr) {
         return vkEnumerateInstanceVersion(&apiVersion);
     }
@@ -308,11 +308,11 @@ void GraphicsBase::PushInstanceExtension(const char* name) {
     AddLayerOrExtension(instanceExtensions, name);
 }
 
-VkResult GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags flags) {
-#ifndef NDEBUG
-    PushInstanceLayer("VK_LAYER_KHRONOS_validation");
-    PushInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif
+ResultType GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags flags) {
+    if constexpr (ENABLE_DEBUG_MESSENGER) {
+        PushInstanceLayer("VK_LAYER_KHRONOS_validation");
+        PushInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
     VkApplicationInfo appInfo = {.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, .apiVersion = apiVersion};
     VkInstanceCreateInfo instanceCreateInfo = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
                                                .pNext = pNext,
@@ -322,7 +322,7 @@ VkResult GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags f
                                                .ppEnabledLayerNames = instanceLayers.data(),
                                                .enabledExtensionCount = uint32_t(instanceExtensions.size()),
                                                .ppEnabledExtensionNames = instanceExtensions.data()};
-    if (VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance)) {
+    if (ResultType result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to create a vulkan instance! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -338,16 +338,16 @@ VkResult GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags f
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::CheckInstaneLayers(std::span<const char*> layersToCheck) const {
+ResultType GraphicsBase::CheckInstaneLayers(std::span<const char*> layersToCheck) const {
     uint32_t layerCount;
     std::vector<VkLayerProperties> availableLayers;
-    if (VkResult result = vkEnumerateInstanceLayerProperties(&layerCount, nullptr)) {
+    if (ResultType result = vkEnumerateInstanceLayerProperties(&layerCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of instance layers!\n");
         return result;
     }
     if (layerCount) {
         availableLayers.resize(layerCount);
-        if (VkResult result = vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data())) {
+        if (ResultType result = vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data())) {
             std::cout << std::format("[GraphicsBase][ERROR] Failed to enumerate instance layer properties! Error: {}({})\n", string_VkResult(result), int32_t(result));
             return result;
         }
@@ -375,17 +375,17 @@ void GraphicsBase::InstanceLayers(const std::vector<const char*>& layerNames) {
     instanceLayers = layerNames;
 }
 
-VkResult GraphicsBase::CheckInstaneExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
+ResultType GraphicsBase::CheckInstaneExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
     uint32_t extensionCount;
     std::vector<VkExtensionProperties> availableExtensions;
-    if (VkResult result = vkEnumerateInstanceExtensionProperties(layerName, &extensionCount, nullptr)) {
+    if (ResultType result = vkEnumerateInstanceExtensionProperties(layerName, &extensionCount, nullptr)) {
         layerName ? std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of instance extensions! Layer name:{}\n", layerName)
                   : std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of instance extensions!\n");
         return result;
     }
     if (extensionCount) {
         availableExtensions.resize(extensionCount);
-        if (VkResult result = vkEnumerateInstanceExtensionProperties(layerName, &extensionCount, availableExtensions.data())) {
+        if (ResultType result = vkEnumerateInstanceExtensionProperties(layerName, &extensionCount, availableExtensions.data())) {
             std::cout << std::format("[GraphicsBase][ERROR] Failed to enumerate instance extension properties! Error: {}({})\n", string_VkResult(result), int32_t(result));
             return result;
         }
@@ -421,9 +421,9 @@ void GraphicsBase::PushDeviceExtension(const char* extensionName) {
     AddLayerOrExtension(deviceExtensions, extensionName);
 }
 
-VkResult GraphicsBase::GetPhysicalDevices() {
+ResultType GraphicsBase::GetPhysicalDevices() {
     uint32_t deviceCount;
-    if (VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr)) {
+    if (ResultType result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of physical devices! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -432,14 +432,14 @@ VkResult GraphicsBase::GetPhysicalDevices() {
         abort();
     }
     availablePhysicalDevices.resize(deviceCount);
-    VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, availablePhysicalDevices.data());
+    ResultType result = vkEnumeratePhysicalDevices(instance, &deviceCount, availablePhysicalDevices.data());
     if (result) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to enumerate physical devices! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
     return result;
 }
 
-VkResult
+ResultType
 GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQueue, bool enableComputeQueue) {
     static constexpr uint32_t notFound = INT32_MAX;
     struct queueFamilyIndexCombination {
@@ -459,7 +459,7 @@ GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQ
         ip == VK_QUEUE_FAMILY_IGNORED && surface ||
         ic == VK_QUEUE_FAMILY_IGNORED && enableComputeQueue) {
         uint32_t indices[3];
-        VkResult result = GetQueueFamilyIndices(availablePhysicalDevices[deviceIndex], enableGraphicsQueue, enableComputeQueue, indices);
+        ResultType result = GetQueueFamilyIndices(availablePhysicalDevices[deviceIndex], enableGraphicsQueue, enableComputeQueue, indices);
         if (result == VK_SUCCESS ||
             result == VK_RESULT_MAX_ENUM) {
             if (enableGraphicsQueue)
@@ -481,7 +481,7 @@ GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQ
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
+ResultType GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
     float queuePriority = 1.f;
     VkDeviceQueueCreateInfo queueCreateInfo[3] = {
         {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -522,7 +522,7 @@ VkResult GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags
         .enabledExtensionCount = uint32_t(deviceExtensions.size()),
         .ppEnabledExtensionNames = deviceExtensions.data(),
         .pEnabledFeatures = &physicalDeviceFeatures};
-    if (VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device)) {
+    if (ResultType result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to create a logical device! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -547,7 +547,7 @@ VkResult GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
+ResultType GraphicsBase::CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
     return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 }
 
@@ -555,7 +555,7 @@ void GraphicsBase::DeviceExtensions(const std::vector<const char*>& extensionNam
     deviceExtensions = extensionNames;
 }
 
-VkResult GraphicsBase::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
+ResultType GraphicsBase::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
     bool formatIsAvailable = false;
     // colorspace default is VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, is SRGB, a standard colorspace
     if (!surfaceFormat.format) {
@@ -588,9 +588,9 @@ VkResult GraphicsBase::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, VkSwapchainCreateFlagsKHR flags) {
+ResultType GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, VkSwapchainCreateFlagsKHR flags) {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
-    if (VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
+    if (ResultType result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface capabilities! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -624,7 +624,7 @@ VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, V
         std::cout << "[GraphicsBase][WARNING] VK_IMAGE_USAGE_TRANSFER_DST_BIT is not supported by the surface!\n";
     }
     if (availableSurfaceFormats.empty()) {
-        if (VkResult result = GetSurfaceFormats()) {
+        if (ResultType result = GetSurfaceFormats()) {
             return result;
         }
     }
@@ -641,7 +641,7 @@ VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, V
     }
     // present mode
     uint32_t surfacePresentModeCount;
-    if (VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &surfacePresentModeCount, nullptr)) {
+    if (ResultType result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &surfacePresentModeCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of surface present modes! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -649,7 +649,7 @@ VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, V
         throw std::runtime_error("[GraphicsBase][ERROR] Failed to find any surface present mode!");
     }
     std::vector<VkPresentModeKHR> surfacePresentModes(surfacePresentModeCount);
-    if (VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &surfacePresentModeCount, surfacePresentModes.data())) {
+    if (ResultType result = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &surfacePresentModeCount, surfacePresentModes.data())) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface present modes! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -672,7 +672,7 @@ VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, V
     swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     swapChainCreateInfo.clipped = VK_TRUE;
     // Create the swap chain
-    if (VkResult result = CreateSwapChainInternal()) {
+    if (ResultType result = CreateSwapChainInternal()) {
         return result;
     }
     // Call the callbacks
@@ -682,9 +682,9 @@ VkResult GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, V
     return VK_SUCCESS;
 }
 
-VkResult GraphicsBase::RecreateSwapChain() {
+ResultType GraphicsBase::RecreateSwapChain() {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
-    if (VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
+    if (ResultType result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface capabilities! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
@@ -694,7 +694,7 @@ VkResult GraphicsBase::RecreateSwapChain() {
     swapChainCreateInfo.imageExtent = surfaceCapabilities.currentExtent;
     swapChainCreateInfo.oldSwapchain = swapChain;
     // before destroy the old swap chain, wait for the graphics queue to be idle
-    VkResult result = vkQueueWaitIdle(queueGraphics);
+    ResultType result = vkQueueWaitIdle(queueGraphics);
     if (result == VK_SUCCESS && queueGraphics != queuePresentation) {
         result = vkQueueWaitIdle(queuePresentation);
     }
@@ -735,8 +735,8 @@ void GraphicsBase::AddCallbackDestroyDevice(void (*callback)()) {
     callbacksDestroyDevice.push_back(callback);
 }
 
-VkResult GraphicsBase::RecreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
-    if (VkResult result = WaitDeviceIdle()) {
+ResultType GraphicsBase::RecreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
+    if (ResultType result = WaitDeviceIdle()) {
         return result;
     }
     if (swapChain) {
@@ -763,8 +763,8 @@ VkResult GraphicsBase::RecreateDevice(const void* pNext, VkDeviceCreateFlags fla
     return CreateDevice(pNext, flags);
 }
 
-VkResult GraphicsBase::WaitDeviceIdle() {
-    VkResult result = vkDeviceWaitIdle(device);
+ResultType GraphicsBase::WaitDeviceIdle() {
+    ResultType result = vkDeviceWaitIdle(device);
     if (result) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to wait for the device to be idle! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

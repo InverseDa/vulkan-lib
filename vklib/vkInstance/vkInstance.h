@@ -3,6 +3,8 @@
 
 #include "vulkan/vulkan.h"
 #include "vulkan/vk_enum_string_helper.h"
+#include "macro.h"
+#include "type/vkResult.h"
 
 #include <vector>
 #include <span>
@@ -34,7 +36,7 @@ class GraphicsBase {
 
     // vk debug messenger
     VkDebugUtilsMessengerEXT debugUtilsMessenger;
-    VkResult CreateDebugMessenger();
+    ResultType CreateDebugMessenger();
 
     // vk window surface
     VkSurfaceKHR surface;
@@ -57,10 +59,10 @@ class GraphicsBase {
     // functions to check whether the physical device meets the required queue family type, and return the
     // corresponding queue family index to queueFamilyIndices. When the execution is successful, the index is directly
     // written to the corresponding member variable.
-    VkResult GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
-                                   bool enableGraphicsQueue,
-                                   bool enableComputeQueue,
-                                   uint32_t (&queueFamilyIndices)[3]);
+    ResultType GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
+                                     bool enableGraphicsQueue,
+                                     bool enableComputeQueue,
+                                     uint32_t (&queueFamilyIndices)[3]);
 
     // vk swap chain
     std::vector<VkSurfaceFormatKHR> availableSurfaceFormats;
@@ -69,7 +71,7 @@ class GraphicsBase {
     std::vector<VkImageView> swapChainImageViews;
     // save the swap chain's create info to recreate the swap chain conveniently
     VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
-    VkResult CreateSwapChainInternal();
+    ResultType CreateSwapChainInternal();
     // callback function vector
     std::vector<void (*)()> callbacksCreateSwapChain;
     std::vector<void (*)()> callbacksDestroySwapChain;
@@ -110,20 +112,20 @@ class GraphicsBase {
     VkImageView GetSwapChainImageView(uint32_t index) const;
     uint32_t GetSwapChainImageCount() const;
     const VkSwapchainCreateInfoKHR& GetSwapChainCreateInfo() const;
-    VkResult GetSurfaceFormats();
+    ResultType GetSurfaceFormats();
 
     // Functions that use the latest api version
-    VkResult UseLatestApiVersion();
+    ResultType UseLatestApiVersion();
 
     // Functions that before the instance is created
     void PushInstanceLayer(const char* name);
     void PushInstanceExtension(const char* name);
     // Functions that create the instance
-    VkResult CreateInstance(const void* pNext = nullptr, VkInstanceCreateFlags flags = 0);
+    ResultType CreateInstance(const void* pNext = nullptr, VkInstanceCreateFlags flags = 0);
     // Functions when the instance is failed to create
-    VkResult CheckInstaneLayers(std::span<const char*> layersToCheck) const;
+    ResultType CheckInstaneLayers(std::span<const char*> layersToCheck) const;
     void InstanceLayers(const std::vector<const char*>& layerNames);
-    VkResult CheckInstaneExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
+    ResultType CheckInstaneExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
     void InstanceExtensions(const std::vector<const char*>& extensionNames);
 
     // Functions that before chose the physical device
@@ -132,27 +134,27 @@ class GraphicsBase {
     // Functions that before the logical device is created
     void PushDeviceExtension(const char* extensionName);
     // Functions that get the physical device
-    VkResult GetPhysicalDevices();
+    ResultType GetPhysicalDevices();
     // Functions that determine the physical device and use `GetQueueFamilyIndices` to get the queue family indices
-    VkResult
+    ResultType
     DeterminePhysicalDevice(uint32_t deviceIndex = 0, bool enableGraphicsQueue = true, bool enableComputeQueue = true);
     // Functions that create the logical device and get its queues
-    VkResult CreateDevice(const void* pNext = nullptr, VkDeviceCreateFlags flags = 0);
+    ResultType CreateDevice(const void* pNext = nullptr, VkDeviceCreateFlags flags = 0);
     // Functions when the logical device is failed to create
-    VkResult CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
+    ResultType CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
     void DeviceExtensions(const std::vector<const char*>& extensionNames);
     // Functions that recreate device
-    VkResult RecreateDevice(const void* pNext = nullptr, VkDeviceCreateFlags flags = 0);
+    ResultType RecreateDevice(const void* pNext = nullptr, VkDeviceCreateFlags flags = 0);
     // Functions that wait device until idle
-    VkResult WaitDeviceIdle();
+    ResultType WaitDeviceIdle();
 
     // Functions that set the surface format
-    VkResult SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat);
+    ResultType SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat);
     // Functions that create the swap chain
-    VkResult
+    ResultType
     CreateSwapChain(bool limitFrameRate = true, const void* pNext = nullptr, VkSwapchainCreateFlagsKHR flags = 0);
     // Functions that recreate the swap chain
-    VkResult RecreateSwapChain();
+    ResultType RecreateSwapChain();
     // Callback functions
     void AddCallbackCreateSwapChain(void (*callback)());
     void AddCallbackDestroySwapChain(void (*callback)());
