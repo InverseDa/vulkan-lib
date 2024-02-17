@@ -3,7 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 
 #include "GLFW/glfw3.h"
-#include "vklib/vkInstance/vkInstance.h"
+#include "vkInstance/vkInstance.h"
 
 #include <cstddef>
 #include <functional>
@@ -11,7 +11,6 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
-#include <gdiplusbitmap.h>
 #include <sstream>
 
 class WindowWrapper {

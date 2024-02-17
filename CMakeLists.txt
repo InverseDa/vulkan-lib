@@ -19,11 +19,15 @@ endforeach()
 
 add_executable(vulkan_lib tests/main.cpp ${VKLIB_SRCS})
 
-find_package(Vulkan REQUIRED)
-
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR})
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/vklib)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/include)
 
-target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
-target_link_libraries(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/lib/GLFW/libfglfw3.dylib)
+if(APPLE)
+    find_package(Vulkan REQUIRED)
+    target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
+else()
+    find_package(Vulkan REQUIRED)
+    find_package(glfw3 REQUIRED)
+    target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
+    target_link_libraries(vulkan_lib PRIVATE glfw)
+endif()
