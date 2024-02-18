@@ -4,8 +4,8 @@
 #include "macro.h"
 #include "vulkan/vulkan.h"
 #include "type/vkArray.h"
-#include "vkCore/vkBase.h"
-#include "vkCore/vkFrameBuffer.h"
+#include "core/vkBase.h"
+#include "core/vkFrameBuffer.h"
 
 #include <vector>
 
