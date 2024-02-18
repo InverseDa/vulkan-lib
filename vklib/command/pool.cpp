@@ -1,4 +1,4 @@
-#include "pool.h"
+#include "command.h"
 
 namespace Vulkan {
 CommandPool::CommandPool(VkCommandPoolCreateInfo& createInfo) {
@@ -30,18 +30,18 @@ ResultType CommandPool::AllocateBuffers(ArrayRef<VkCommandBuffer> buffers, VkCom
     return result;
 }
 
-ResultType CommandPool::AllocateBuffers(ArrayRef<CommandBuffer> buffers, VkCommandBufferLevel level) const {
-    return AllocateBuffers({&buffers[0].handle, buffers.Count()}, level);
-}
+ ResultType CommandPool::AllocateBuffers(ArrayRef<CommandBuffer> buffers, VkCommandBufferLevel level) const {
+     return AllocateBuffers({&buffers[0].handle, buffers.Count()}, level);
+ }
 
 void CommandPool::FreeBuffers(ArrayRef<VkCommandBuffer> buffers) const {
     vkFreeCommandBuffers(GraphicsBase::GetInstance().GetDevice(), handle, buffers.Count(), buffers.Pointer());
     memset(buffers.Pointer(), 0, buffers.Count() * sizeof(VkCommandBuffer));
 }
 
-void CommandPool::FreeBuffers(ArrayRef<CommandBuffer> buffers) const {
-    FreeBuffers({&buffers[0].handle, buffers.Count()});
-}
+ void CommandPool::FreeBuffers(ArrayRef<CommandBuffer> buffers) const {
+     FreeBuffers({&buffers[0].handle, buffers.Count()});
+ }
 
 ResultType CommandPool::Create(VkCommandPoolCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -54,8 +54,8 @@ ResultType CommandPool::Create(VkCommandPoolCreateInfo& createInfo) {
 
 ResultType CommandPool::Create(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags) {
     VkCommandPoolCreateInfo createInfo = {
-        .queueFamilyIndex = queueFamilyIndex,
-        .flags = flags};
+        .flags = flags,
+        .queueFamilyIndex = queueFamilyIndex};
     return Create(createInfo);
 }
 

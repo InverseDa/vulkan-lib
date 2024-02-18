@@ -1,14 +1,29 @@
-#ifndef VULKAN_LIB_POOL_H
-#define VULKAN_LIB_POOL_H
+#ifndef VULKAN_LIB_COMMAND_H
+#define VULKAN_LIB_COMMAND_H
 
 #include "macro.h"
-#include "buffer.h"
-#include "command/pool.h"
 #include "type/vkResult.h"
 #include "type/vkArray.h"
 #include "vulkan/vulkan.h"
 
 namespace Vulkan {
+class CommandBuffer {
+  public:
+    CommandBuffer() = default;
+    CommandBuffer(CommandBuffer&& other) noexcept;
+    // Getter
+    DefineHandleTypeOperator;
+    DefineAddressFunction;
+
+    ResultType Begin(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo) const;
+    ResultType Begin(VkCommandBufferUsageFlags usageFlags) const;
+    ResultType End() const;
+
+  private:
+    friend class CommandPool;
+    VkCommandBuffer handle = VK_NULL_HANDLE;
+};
+
 class CommandPool {
   public:
     CommandPool() = default;
@@ -34,4 +49,4 @@ class CommandPool {
 };
 } // namespace Vulkan
 
-#endif // VULKAN_LIB_POOL_H
+#endif // VULKAN_LIB_COMMAND_H
