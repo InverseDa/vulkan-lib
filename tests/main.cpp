@@ -4,6 +4,10 @@
 #include "command/command.h"
 #include "vkInstance/vkRenderPass.h"
 
+const Vulkan::RenderPassWithFrameBuffers& GetRenderPassAndFrameBuffers();
+void CreateLayout();
+void CreatePipeline();
+
 int main() {
     WindowWrapper window({800, 600}, false, true);
 
