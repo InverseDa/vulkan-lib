@@ -1,4 +1,4 @@
-#include "vkInstance/vkRenderPass.h"
+#include "vkCore/vkRenderPass.h"
 
 namespace Vulkan {
 RenderPass::RenderPass(VkRenderPassCreateInfo& renderPassCreateInfo) {

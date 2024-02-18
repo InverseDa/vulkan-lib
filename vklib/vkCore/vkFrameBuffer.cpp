@@ -1,4 +1,4 @@
-#include "vkInstance/vkFrameBuffer.h"
+#include "vkCore/vkFrameBuffer.h"
 
 namespace Vulkan {
 FrameBuffer::FrameBuffer(VkFramebufferCreateInfo& createInfo) {

@@ -1,7 +1,7 @@
 #ifndef VULKAN_LIB_MACRO_H
 #define VULKAN_LIB_MACRO_H
 
-#include "vkInstance/vkBase.h"
+#include "vkCore/vkBase.h"
 
 #ifndef NDEBUG
 #define ENABLE_DEBUG_MESSENGER true

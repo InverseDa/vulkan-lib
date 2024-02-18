@@ -1,4 +1,4 @@
-#include "vkInstance/vkPipeline.h"
+#include "vkCore/vkPipeline.h"
 
 namespace Vulkan {
 Pipeline::Pipeline(VkGraphicsPipelineCreateInfo& createInfo) {

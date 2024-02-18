@@ -2,7 +2,7 @@
 #include "synchronize/fence.h"
 #include "synchronize/semaphore.h"
 #include "command/command.h"
-#include "vkInstance/vkRenderPass.h"
+#include "vkCore/vkRenderPass.h"
 
 const Vulkan::RenderPassWithFrameBuffers& GetRenderPassAndFrameBuffers();
 void CreateLayout();
