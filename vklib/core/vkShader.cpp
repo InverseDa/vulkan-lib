@@ -28,6 +28,7 @@ VkPipelineShaderStageCreateInfo ShaderModule::GetStageCreateInfo(VkShaderStageFl
         .pNext = nullptr,
         .flags = 0,
         .stage = stage,
+        .module = handle,
         .pName = entry,
         .pSpecializationInfo = nullptr,
     };
@@ -48,12 +49,12 @@ ResultType ShaderModule::Create(const char* filePath) {
         outStream << std::format("[ShaderModule][ERROR] Failed to open file: {}\n", filePath);
         return VK_RESULT_MAX_ENUM;
     }
-    size_t fileSize = file.tellg();
-    std::vector<uint32_t> buffer(fileSize / 4);
+    size_t fileSize = size_t(file.tellg());
+    std::vector<uint32_t> binaries(fileSize / 4);
     file.seekg(0);
-    file.read(reinterpret_cast<char*>(buffer.data()), fileSize);
+    file.read(reinterpret_cast<char*>(binaries.data()), fileSize);
     file.close();
-    return Create(fileSize, buffer.data());
+    return Create(fileSize, binaries.data());
 }
 
 ResultType ShaderModule::Create(size_t codeSize, const uint32_t* pCode) {

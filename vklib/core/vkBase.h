@@ -1,5 +1,5 @@
-#ifndef VKINSTANCE_H
-#define VKINSTANCE_H
+#ifndef VULKAN_LIB_VKCORE_H
+#define VULKAN_LIB_VKCORE_H
 
 #include "vulkan/vulkan.h"
 #include "vulkan/vk_enum_string_helper.h"

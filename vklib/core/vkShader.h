@@ -19,7 +19,6 @@ class ShaderModule {
     // Getter
     DefineHandleTypeOperator;
     DefineAddressFunction;
-
     VkPipelineShaderStageCreateInfo GetStageCreateInfo(VkShaderStageFlagBits stage, const char* entry = "main") const;
 
     ResultType Create(VkShaderModuleCreateInfo& createInfo);
