@@ -60,10 +60,7 @@ class GraphicsBase {
     // functions to check whether the physical device meets the required queue family type, and return the
     // corresponding queue family index to queueFamilyIndices. When the execution is successful, the index is directly
     // written to the corresponding member variable.
-    ResultType GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
-                                     bool enableGraphicsQueue,
-                                     bool enableComputeQueue,
-                                     uint32_t (&queueFamilyIndices)[3]);
+    ResultType GetQueueFamilyIndices(VkPhysicalDevice physicalDevice, bool enableGraphicsQueue, bool enableComputeQueue, uint32_t (&queueFamilyIndices)[3]);
 
     // vk swap chain
     std::vector<VkSurfaceFormatKHR> availableSurfaceFormats;
@@ -78,6 +75,8 @@ class GraphicsBase {
     std::vector<void (*)()> callbacksDestroySwapChain;
     std::vector<void (*)()> callbacksCreateDevice;
     std::vector<void (*)()> callbacksDestroyDevice;
+    // current image index
+    uint32_t currentImageIndex = 0;
 
   public:
     static GraphicsBase& GetInstance();
@@ -124,9 +123,9 @@ class GraphicsBase {
     // Functions that create the instance
     ResultType CreateInstance(const void* pNext = nullptr, VkInstanceCreateFlags flags = 0);
     // Functions when the instance is failed to create
-    ResultType CheckInstaneLayers(std::span<const char*> layersToCheck) const;
+    ResultType CheckInstanceLayers(std::span<const char*> layersToCheck) const;
     void InstanceLayers(const std::vector<const char*>& layerNames);
-    ResultType CheckInstaneExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
+    ResultType CheckInstanceExtensions(std::span<const char*> extensionsToCheck, const char* layerName = nullptr) const;
     void InstanceExtensions(const std::vector<const char*>& extensionNames);
 
     // Functions that before chose the physical device
@@ -161,6 +160,25 @@ class GraphicsBase {
     void AddCallbackDestroySwapChain(void (*callback)());
     void AddCallbackCreateDevice(void (*callback)());
     void AddCallbackDestroyDevice(void (*callback)());
+    // Functions that swap the image
+    ResultType SwapImage(VkSemaphore imageIsAvailableSem);
+    uint32_t GetCurrentImageIndex() const;
+    // Functions that submit the command buffer
+    //// graphics
+    ////// this function is used to submit the command buffer to the graphics queue include the data transfer commands
+    ////// so the semaphore is not needed
+    ResultType SubmitCommandBufferGraphics(VkSubmitInfo& submitInfo, VkFence fence = VK_NULL_HANDLE) const;
+    ////// this function is used to submit the command buffer to the graphics queue in rendering loop case
+    ResultType SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkSemaphore imageIsAvailableSem = VK_NULL_HANDLE, VkSemaphore renderingIsFinishedSem = VK_NULL_HANDLE, VkFence fence = VK_NULL_HANDLE) const;
+    ////// this function is used to submit the command buffer to the graphics queue only use fence
+    ResultType SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkFence fence = VK_NULL_HANDLE) const;
+
+    ResultType SubmitCommandBufferCompute(VkSubmitInfo& submitInfo, VkFence fence = VK_NULL_HANDLE) const;
+    ResultType SubmitCommandBufferCompute(VkCommandBuffer commandBuffer, VkFence fence = VK_NULL_HANDLE) const;
+    // Functions that present the image
+    ResultType PresentImage(VkPresentInfoKHR& presentInfo);
+    ResultType PresentImage(VkSemaphore renderingIsFinishedSem = VK_NULL_HANDLE);
+
     // Functions that terminate vulkan instance when the program is running
     void Terminate();
 };

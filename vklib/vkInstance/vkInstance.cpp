@@ -75,10 +75,7 @@ ResultType GraphicsBase::CreateDebugMessenger() {
     return VK_RESULT_MAX_ENUM;
 }
 
-ResultType GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice,
-                                               bool enableGraphicsQueue,
-                                               bool enableComputeQueue,
-                                               uint32_t (&queueFamilyIndices)[3]) {
+ResultType GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice, bool enableGraphicsQueue, bool enableComputeQueue, uint32_t (&queueFamilyIndices)[3]) {
     uint32_t queueFamilyCount;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
     if (!queueFamilyCount) {
@@ -313,24 +310,26 @@ ResultType GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags
         PushInstanceLayer("VK_LAYER_KHRONOS_validation");
         PushInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
-    VkApplicationInfo appInfo = {.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, .apiVersion = apiVersion};
-    VkInstanceCreateInfo instanceCreateInfo = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-                                               .pNext = pNext,
-                                               .flags = flags,
-                                               .pApplicationInfo = &appInfo,
-                                               .enabledLayerCount = uint32_t(instanceLayers.size()),
-                                               .ppEnabledLayerNames = instanceLayers.data(),
-                                               .enabledExtensionCount = uint32_t(instanceExtensions.size()),
-                                               .ppEnabledExtensionNames = instanceExtensions.data()};
+    VkApplicationInfo appInfo = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .apiVersion = apiVersion,
+    };
+    VkInstanceCreateInfo instanceCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pNext = pNext,
+        .flags = flags,
+        .pApplicationInfo = &appInfo,
+        .enabledLayerCount = uint32_t(instanceLayers.size()),
+        .ppEnabledLayerNames = instanceLayers.data(),
+        .enabledExtensionCount = uint32_t(instanceExtensions.size()),
+        .ppEnabledExtensionNames = instanceExtensions.data(),
+    };
     if (ResultType result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to create a vulkan instance! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
     }
     // if success to create vulkan instance, print the version of Vulkan API
-    std::cout << std::format("[INFO] Vulkan API Version: {}.{}.{}\n",
-                             VK_VERSION_MAJOR(apiVersion),
-                             VK_VERSION_MINOR(apiVersion),
-                             VK_VERSION_PATCH(apiVersion));
+    std::cout << std::format("[INFO] Vulkan API Version: {}.{}.{}\n", VK_VERSION_MAJOR(apiVersion), VK_VERSION_MINOR(apiVersion), VK_VERSION_PATCH(apiVersion));
 #ifndef NDEBUG
     // create debug messenger
     CreateDebugMessenger();
@@ -338,7 +337,7 @@ ResultType GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::CheckInstaneLayers(std::span<const char*> layersToCheck) const {
+ResultType GraphicsBase::CheckInstanceLayers(std::span<const char*> layersToCheck) const {
     uint32_t layerCount;
     std::vector<VkLayerProperties> availableLayers;
     if (ResultType result = vkEnumerateInstanceLayerProperties(&layerCount, nullptr)) {
@@ -375,7 +374,7 @@ void GraphicsBase::InstanceLayers(const std::vector<const char*>& layerNames) {
     instanceLayers = layerNames;
 }
 
-ResultType GraphicsBase::CheckInstaneExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
+ResultType GraphicsBase::CheckInstanceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
     uint32_t extensionCount;
     std::vector<VkExtensionProperties> availableExtensions;
     if (ResultType result = vkEnumerateInstanceExtensionProperties(layerName, &extensionCount, nullptr)) {
@@ -492,10 +491,12 @@ ResultType GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags fla
          .queueFamilyIndex = queueFamilyIndexPresentation,
          .queueCount = 1,
          .pQueuePriorities = &queuePriority},
-        {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-         .queueFamilyIndex = queueFamilyIndexCompute,
-         .queueCount = 1,
-         .pQueuePriorities = &queuePriority}};
+        {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = queueFamilyIndexCompute,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority,
+        }};
     uint32_t queueCreateInfoCount = 0;
     if (queueFamilyIndexGraphics != VK_QUEUE_FAMILY_IGNORED) {
         queueCreateInfo[queueCreateInfoCount++].queueFamilyIndex = queueFamilyIndexGraphics;
@@ -521,7 +522,8 @@ ResultType GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags fla
         .pQueueCreateInfos = queueCreateInfo,
         .enabledExtensionCount = uint32_t(deviceExtensions.size()),
         .ppEnabledExtensionNames = deviceExtensions.data(),
-        .pEnabledFeatures = &physicalDeviceFeatures};
+        .pEnabledFeatures = &physicalDeviceFeatures,
+    };
     if (ResultType result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to create a logical device! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
@@ -689,8 +691,9 @@ ResultType GraphicsBase::RecreateSwapChain() {
         return result;
     }
     if (surfaceCapabilities.currentExtent.width == 0 ||
-        surfaceCapabilities.currentExtent.height == 0)
+        surfaceCapabilities.currentExtent.height == 0) {
         return VK_SUCCESS;
+    }
     swapChainCreateInfo.imageExtent = surfaceCapabilities.currentExtent;
     swapChainCreateInfo.oldSwapchain = swapChain;
     // before destroy the old swap chain, wait for the graphics queue to be idle
@@ -782,6 +785,111 @@ void GraphicsBase::Terminate() {
     swapChainImageViews.resize(0);
     swapChainCreateInfo = {};
     debugUtilsMessenger = VK_NULL_HANDLE;
+}
+
+ResultType GraphicsBase::SwapImage(VkSemaphore imageIsAvailableSem) {
+    // destroy old swap chain image view
+    if (swapChainCreateInfo.oldSwapchain && swapChainCreateInfo.oldSwapchain != swapChain) {
+        vkDestroySwapchainKHR(device, swapChainCreateInfo.oldSwapchain, nullptr);
+        swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+    }
+    while (VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageIsAvailableSem, VK_NULL_HANDLE, &currentImageIndex)) {
+        switch (result) {
+        case VK_SUBOPTIMAL_KHR:
+        case VK_ERROR_OUT_OF_DATE_KHR:
+            if (VkResult result = RecreateSwapChain()) {
+                return result;
+            }
+            break;
+        default:
+            std::cout << std::format("[GraphicsBase][ERROR] Failed to acquire the next image! Error: {}({})\n", string_VkResult(result), int32_t(result));
+            return result;
+        }
+    }
+    return VK_SUCCESS;
+}
+
+uint32_t GraphicsBase::GetCurrentImageIndex() const {
+    return currentImageIndex;
+}
+
+ResultType GraphicsBase::SubmitCommandBufferGraphics(VkSubmitInfo& submitInfo, VkFence fence) const {
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    VkResult result = vkQueueSubmit(queueGraphics, 1, &submitInfo, fence);
+    if (result) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to submit the command buffer to the graphics queue! Error: {}({})\n", string_VkResult(result), int32_t(result));
+    }
+    return result;
+}
+
+ResultType GraphicsBase::SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkSemaphore imageIsAvailableSem, VkSemaphore renderingIsFinishedSem, VkFence fence) const {
+    static constexpr VkPipelineStageFlags waitDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkSubmitInfo submitInfo = {
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer,
+    };
+    if (imageIsAvailableSem) {
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = &imageIsAvailableSem;
+        submitInfo.pWaitDstStageMask = &waitDstStage;
+    }
+    if (renderingIsFinishedSem) {
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &renderingIsFinishedSem;
+    }
+    return SubmitCommandBufferGraphics(submitInfo, fence);
+}
+
+ResultType GraphicsBase::SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkFence fence) const {
+    VkSubmitInfo sumbitInfo = {
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer,
+    };
+    return SubmitCommandBufferGraphics(sumbitInfo, fence);
+}
+
+ResultType GraphicsBase::SubmitCommandBufferCompute(VkSubmitInfo& submitInfo, VkFence fence) const {
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    VkResult result = vkQueueSubmit(queueCompute, 1, &submitInfo, fence);
+    if (result) {
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to submit the command buffer to the compute queue! Error: {}({})\n", string_VkResult(result), int32_t(result));
+    }
+    return result;
+}
+
+ResultType GraphicsBase::SubmitCommandBufferCompute(VkCommandBuffer commandBuffer, VkFence fence) const {
+    VkSubmitInfo submitInfo = {
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer,
+    };
+    return SubmitCommandBufferCompute(submitInfo, fence);
+}
+
+ResultType GraphicsBase::PresentImage(VkPresentInfoKHR& presentInfo) {
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    switch (VkResult result = vkQueuePresentKHR(queuePresentation, &presentInfo)) {
+    case VK_SUCCESS:
+        return VK_SUCCESS;
+    case VK_SUBOPTIMAL_KHR:
+    case VK_ERROR_OUT_OF_DATE_KHR:
+        return RecreateSwapChain();
+    default:
+        std::cout << std::format("[GraphicsBase][ERROR] Failed to present the image! Error: {}({})\n", string_VkResult(result), int32_t(result));
+        return result;
+    }
+}
+
+ResultType GraphicsBase::PresentImage(VkSemaphore renderingIsFinishedSem) {
+    VkPresentInfoKHR presentInfo = {
+        .swapchainCount = 1,
+        .pSwapchains = &swapChain,
+        .pImageIndices = &currentImageIndex,
+    };
+    if (renderingIsFinishedSem) {
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &renderingIsFinishedSem;
+    }
+    return PresentImage(presentInfo);
 }
 
 } // namespace Vulkan
