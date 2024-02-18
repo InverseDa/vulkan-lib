@@ -53,4 +53,70 @@ ResultType RenderPass::Create(VkRenderPassCreateInfo& renderPassCreateInfo) {
     return result;
 }
 
+const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
+    static RenderPassWithFrameBuffers renderPassWithFrameBuffers;
+    if (renderPassWithFrameBuffers.renderPass) {
+        outStream << "Render pass already created" << std::endl;
+    } else {
+        VkAttachmentDescription attachmentDescription = {
+            .format = GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageFormat,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        };
+        VkAttachmentReference attachmentReference = {
+            .attachment = 0,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        };
+        VkSubpassDescription subpassDescription = {
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &attachmentReference,
+        };
+        VkSubpassDependency subpassDependency = {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .dstSubpass = 0,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = 0,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+        };
+        VkRenderPassCreateInfo renderPassCreateInfo = {
+            .attachmentCount = 1,
+            .pAttachments = &attachmentDescription,
+            .subpassCount = 1,
+            .pSubpasses = &subpassDescription,
+            .dependencyCount = 1,
+            .pDependencies = &subpassDependency,
+        };
+        renderPassWithFrameBuffers.renderPass.Create(renderPassCreateInfo);
+        auto CreateFrameBuffers = [] {
+            renderPassWithFrameBuffers.frameBuffers.resize(GraphicsBase::GetInstance().GetSwapChainImageCount());
+            // TODO: may use window size
+            VkFramebufferCreateInfo framebufferCreateInfo = {
+                .renderPass = renderPassWithFrameBuffers.renderPass,
+                .attachmentCount = 1,
+                .width = GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageExtent.width,
+                .height = GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageExtent.height,
+                .layers = 1,
+            };
+            for (size_t i = 0; i < GraphicsBase::GetInstance().GetSwapChainImageCount(); i++) {
+                VkImageView attachment = GraphicsBase::GetInstance().GetSwapChainImageView(i);
+                framebufferCreateInfo.pAttachments = &attachment;
+                renderPassWithFrameBuffers.frameBuffers[i].Create(framebufferCreateInfo);
+            }
+        };
+        auto DestroyFrameBuffers = [] {
+            renderPassWithFrameBuffers.frameBuffers.clear();
+        };
+        GraphicsBase::GetInstance().AddCallbackCreateSwapChain(CreateFrameBuffers);
+        GraphicsBase::GetInstance().AddCallbackDestroySwapChain(DestroyFrameBuffers);
+        CreateFrameBuffers();
+    }
+    return renderPassWithFrameBuffers;
+}
+
 } // namespace Vulkan

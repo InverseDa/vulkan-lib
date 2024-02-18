@@ -4,6 +4,8 @@
 #include "macro.h"
 #include "vulkan/vulkan.h"
 #include "type/vkArray.h"
+#include "vkInstance/vkInstance.h"
+#include "vkInstance/vkFrameBuffer.h"
 
 #include <vector>
 
@@ -33,17 +35,10 @@ class RenderPass {
 
 struct RenderPassWithFrameBuffers {
     RenderPass renderPass;
-    std::vector<VkFramebuffer> frameBuffers;
+    std::vector<FrameBuffer> frameBuffers;
 };
 
-const auto& CreateRenderPassWithFrameBuffersScreen() {
-    static RenderPassWithFrameBuffers renderPassWithFrameBuffers;
-    if (renderPassWithFrameBuffers.renderPass) {
-        outStream << "Render pass already created" << std::endl;
-    } else {
-    }
-    return renderPassWithFrameBuffers;
-}
+const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen();
 
 } // namespace Vulkan
 
