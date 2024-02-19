@@ -43,12 +43,12 @@ int main() {
         // This Area is Mouse and keyboard input
         // ========================================
         // Begin command buffer
-        commandBuffer.Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-        renderPass.CmdBegin(commandBuffer, framebuffers[index], {{}, windowSize}, clearColor);
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-        renderPass.CmdEnd(commandBuffer);
-        commandBuffer.End();
+        commandBuffer.SetBuffers(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, [&] {
+            renderPass.SetCommands(commandBuffer, framebuffers[index], {{}, windowSize}, clearColor, [&]{
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+                vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+            });
+        });
 
         // Submit command buffer
         Vulkan::GraphicsBase::GetInstance().SubmitCommandBufferGraphics(commandBuffer, imageIsAvailableSem, renderingIsFinishedSem, fence);

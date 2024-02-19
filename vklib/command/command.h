@@ -6,6 +6,8 @@
 #include "type/vkArray.h"
 #include "vulkan/vulkan.h"
 
+#include <functional>
+
 namespace Vulkan {
 class CommandBuffer {
   public:
@@ -15,9 +17,12 @@ class CommandBuffer {
     DefineHandleTypeOperator;
     DefineAddressFunction;
 
-    ResultType Begin(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo) const;
     ResultType Begin(VkCommandBufferUsageFlags usageFlags) const;
+    ResultType Begin(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo) const;
     ResultType End() const;
+
+    void SetBuffers(VkCommandBufferUsageFlags usageFlags, const std::function<void()>& func) const;
+    void SetBuffers(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo, const std::function<void()>& func) const;
 
   private:
     friend class CommandPool;

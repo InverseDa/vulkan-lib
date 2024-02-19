@@ -8,6 +8,7 @@
 #include "core/vkFrameBuffer.h"
 
 #include <vector>
+#include <functional>
 
 namespace Vulkan {
 class RenderPass {
@@ -26,6 +27,9 @@ class RenderPass {
     void CmdBegin(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, VkRect2D renderArea, ArrayRef<const VkClearValue> clearValue = {}, VkSubpassContents subpassContents = VK_SUBPASS_CONTENTS_INLINE) const;
     void CmdNext(VkCommandBuffer commandBuffer, VkSubpassContents subpassContents = VK_SUBPASS_CONTENTS_INLINE) const;
     void CmdEnd(VkCommandBuffer commandBuffer) const;
+
+    void SetCommands(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo& beginInfo, const std::function<void()>& commands = [] {}, VkSubpassContents subpassContents = VK_SUBPASS_CONTENTS_INLINE) const;
+    void SetCommands(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, VkRect2D renderArea, ArrayRef<const VkClearValue> clearValue = {}, const std::function<void()>& commands = [] {}, VkSubpassContents subpassContents = VK_SUBPASS_CONTENTS_INLINE) const;
 
     ResultType Create(VkRenderPassCreateInfo& renderPassCreateInfo);
 

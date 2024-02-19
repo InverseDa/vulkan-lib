@@ -53,6 +53,18 @@ ResultType RenderPass::Create(VkRenderPassCreateInfo& renderPassCreateInfo) {
     return result;
 }
 
+void RenderPass::SetCommands(VkCommandBuffer commandBuffer, VkRenderPassBeginInfo& beginInfo, const std::function<void()>& commands, VkSubpassContents subpassContents) const {
+    CmdBegin(commandBuffer, beginInfo, subpassContents);
+    commands();
+    CmdEnd(commandBuffer);
+}
+
+void RenderPass::SetCommands(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, VkRect2D renderArea, ArrayRef<const VkClearValue> clearValue, const std::function<void()>& commands, VkSubpassContents subpassContents) const {
+    CmdBegin(commandBuffer, frameBuffer, renderArea, clearValue, subpassContents);
+    commands();
+    CmdEnd(commandBuffer);
+}
+
 const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
     static RenderPassWithFrameBuffers renderPassWithFrameBuffers;
     if (renderPassWithFrameBuffers.renderPass) {

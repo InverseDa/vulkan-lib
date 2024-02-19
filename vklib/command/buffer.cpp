@@ -10,7 +10,8 @@ ResultType CommandBuffer::Begin(VkCommandBufferUsageFlags usageFlags, VkCommandB
     VkCommandBufferBeginInfo beginInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = usageFlags,
-        .pInheritanceInfo = &inheritanceInfo};
+        .pInheritanceInfo = &inheritanceInfo
+    };
     VkResult result = vkBeginCommandBuffer(handle, &beginInfo);
     if (result) {
         outStream << std::format("[CommandBuffer][ERROR] Failed to begin a command buffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -21,7 +22,8 @@ ResultType CommandBuffer::Begin(VkCommandBufferUsageFlags usageFlags, VkCommandB
 ResultType CommandBuffer::Begin(VkCommandBufferUsageFlags usageFlags) const {
     VkCommandBufferBeginInfo beginInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = usageFlags};
+        .flags = usageFlags
+    };
     VkResult result = vkBeginCommandBuffer(handle, &beginInfo);
     if (result) {
         outStream << std::format("[CommandBuffer][ERROR] Failed to begin a command buffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -35,6 +37,18 @@ ResultType CommandBuffer::End() const {
         outStream << std::format("[CommandBuffer][ERROR] Failed to end a command buffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
     return result;
+}
+
+void CommandBuffer::SetBuffers(VkCommandBufferUsageFlags usageFlags, const std::function<void()>& func) const {
+    Begin(usageFlags);
+    func();
+    End();
+}
+
+void CommandBuffer::SetBuffers(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo, const std::function<void()>& func) const {
+    Begin(usageFlags, inheritanceInfo);
+    func();
+    End();
 }
 
 } // namespace Vulkan
