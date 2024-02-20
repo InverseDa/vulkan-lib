@@ -36,8 +36,8 @@ void Application::CreatePipeline() {
     std::function<void()> Destroy = [&]() {
         pipeline.~Pipeline();
     };
-    Vulkan::GraphicsBase::GetInstance().AddCallbackCreateSwapChain(Create);
-    Vulkan::GraphicsBase::GetInstance().AddCallbackDestroySwapChain(Destroy);
+    Vulkan::Context::GetInstance().AddCallbackCreateSwapChain(Create);
+    Vulkan::Context::GetInstance().AddCallbackDestroySwapChain(Destroy);
     Create();
 }
 
@@ -47,8 +47,8 @@ int Application::Run(const std::function<void()>& func) {
         while (!window.IsClose()) {
             window.ShowTitleFPS();
             fence.WaitAndReset();
-            Vulkan::GraphicsBase::GetInstance().SwapImage(imageIsAvailableSem);
-            auto index = Vulkan::GraphicsBase::GetInstance().GetCurrentImageIndex();
+            Vulkan::Context::GetInstance().SwapImage(imageIsAvailableSem);
+            auto index = Vulkan::Context::GetInstance().GetCurrentImageIndex();
             // ...
             // ========================================
             // This Area is Mouse and keyboard input
@@ -60,9 +60,9 @@ int Application::Run(const std::function<void()>& func) {
                 });
             });
             // Submit command buffer
-            Vulkan::GraphicsBase::GetInstance().SubmitCommandBufferGraphics(commandBuffer, imageIsAvailableSem, renderingIsFinishedSem, fence);
+            Vulkan::Context::GetInstance().SubmitCommandBufferGraphics(commandBuffer, imageIsAvailableSem, renderingIsFinishedSem, fence);
             // Present image
-            Vulkan::GraphicsBase::GetInstance().PresentImage(renderingIsFinishedSem);
+            Vulkan::Context::GetInstance().PresentImage(renderingIsFinishedSem);
             window.PollEvents();
         }
     } catch (const std::exception& e) {

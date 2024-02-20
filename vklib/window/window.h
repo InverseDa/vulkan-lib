@@ -3,7 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 
 #include "GLFW/glfw3.h"
-#include "core/vkBase.h"
+#include "core/vkContext.h"
 
 #include <cstddef>
 #include <functional>

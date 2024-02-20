@@ -45,7 +45,7 @@ void RenderPass::CmdEnd(VkCommandBuffer commandBuffer) const {
 
 ResultType RenderPass::Create(VkRenderPassCreateInfo& renderPassCreateInfo) {
     renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    VkResult result = vkCreateRenderPass(GraphicsBase::GetInstance().GetDevice(), &renderPassCreateInfo, nullptr, &handle);
+    VkResult result = vkCreateRenderPass(Context::GetInstance().GetDevice(), &renderPassCreateInfo, nullptr, &handle);
     if (result) {
         std::cout << std::format("[RenderPass][ERROR] Failed to create a render pass! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
@@ -70,7 +70,7 @@ const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
         outStream << "Render pass already created" << std::endl;
     } else {
         VkAttachmentDescription attachmentDescription = {
-            .format = GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageFormat,
+            .format = Context::GetInstance().GetSwapChainCreateInfo().imageFormat,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -105,17 +105,17 @@ const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
         };
         renderPassWithFrameBuffers.renderPass.Create(renderPassCreateInfo);
         std::function<void()> CreateFrameBuffers = []() {
-            renderPassWithFrameBuffers.frameBuffers.resize(GraphicsBase::GetInstance().GetSwapChainImageCount());
+            renderPassWithFrameBuffers.frameBuffers.resize(Context::GetInstance().GetSwapChainImageCount());
             // TODO: may use window size
             VkFramebufferCreateInfo framebufferCreateInfo = {
                 .renderPass = renderPassWithFrameBuffers.renderPass,
                 .attachmentCount = 1,
-                .width = GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageExtent.width,
-                .height = GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageExtent.height,
+                .width = Context::GetInstance().GetSwapChainCreateInfo().imageExtent.width,
+                .height = Context::GetInstance().GetSwapChainCreateInfo().imageExtent.height,
                 .layers = 1,
             };
-            for (size_t i = 0; i < GraphicsBase::GetInstance().GetSwapChainImageCount(); i++) {
-                VkImageView attachment = GraphicsBase::GetInstance().GetSwapChainImageView(i);
+            for (size_t i = 0; i < Context::GetInstance().GetSwapChainImageCount(); i++) {
+                VkImageView attachment = Context::GetInstance().GetSwapChainImageView(i);
                 framebufferCreateInfo.pAttachments = &attachment;
                 renderPassWithFrameBuffers.frameBuffers[i].Create(framebufferCreateInfo);
             }
@@ -123,8 +123,8 @@ const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
         std::function<void()> DestroyFrameBuffers = []() {
             renderPassWithFrameBuffers.frameBuffers.clear();
         };
-        GraphicsBase::GetInstance().AddCallbackCreateSwapChain(CreateFrameBuffers);
-        GraphicsBase::GetInstance().AddCallbackDestroySwapChain(DestroyFrameBuffers);
+        Context::GetInstance().AddCallbackCreateSwapChain(CreateFrameBuffers);
+        Context::GetInstance().AddCallbackDestroySwapChain(DestroyFrameBuffers);
         CreateFrameBuffers();
     }
     return renderPassWithFrameBuffers;

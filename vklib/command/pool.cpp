@@ -23,7 +23,7 @@ ResultType CommandPool::AllocateBuffers(ArrayRef<VkCommandBuffer> buffers, VkCom
         .commandPool = handle,
         .level = level,
         .commandBufferCount = uint32_t(buffers.Count())};
-    VkResult result = vkAllocateCommandBuffers(GraphicsBase::GetInstance().GetDevice(), &allocateInfo, buffers.Pointer());
+    VkResult result = vkAllocateCommandBuffers(Context::GetInstance().GetDevice(), &allocateInfo, buffers.Pointer());
     if (result) {
         outStream << std::format("[CommandPool][ERROR] Failed to allocate command buffers! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
@@ -35,7 +35,7 @@ ResultType CommandPool::AllocateBuffers(ArrayRef<VkCommandBuffer> buffers, VkCom
  }
 
 void CommandPool::FreeBuffers(ArrayRef<VkCommandBuffer> buffers) const {
-    vkFreeCommandBuffers(GraphicsBase::GetInstance().GetDevice(), handle, buffers.Count(), buffers.Pointer());
+    vkFreeCommandBuffers(Context::GetInstance().GetDevice(), handle, buffers.Count(), buffers.Pointer());
     memset(buffers.Pointer(), 0, buffers.Count() * sizeof(VkCommandBuffer));
 }
 
@@ -45,7 +45,7 @@ void CommandPool::FreeBuffers(ArrayRef<VkCommandBuffer> buffers) const {
 
 ResultType CommandPool::Create(VkCommandPoolCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    VkResult result = vkCreateCommandPool(GraphicsBase::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
+    VkResult result = vkCreateCommandPool(Context::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("[CommandPool][ERROR] Failed to create a command pool! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

@@ -1,12 +1,12 @@
-#include "vkBase.h"
+#include "vkContext.h"
 
 namespace Vulkan {
 // ==================================================
 // Private
 // ==================================================
-inline GraphicsBase GraphicsBase::singleton;
+inline Context Context::singleton;
 
-GraphicsBase::~GraphicsBase() {
+Context::~Context() {
     if (!instance) {
         return;
     }
@@ -41,7 +41,7 @@ GraphicsBase::~GraphicsBase() {
     vkDestroyInstance(instance, nullptr);
 }
 
-void GraphicsBase::AddLayerOrExtension(std::vector<const char*>& container, const char* name) {
+void Context::AddLayerOrExtension(std::vector<const char*>& container, const char* name) {
     for (auto& item : container) {
         if (strcmp(item, name) == 0) {
             return;
@@ -50,7 +50,7 @@ void GraphicsBase::AddLayerOrExtension(std::vector<const char*>& container, cons
     container.push_back(name);
 }
 
-ResultType GraphicsBase::CreateDebugMessenger() {
+ResultType Context::CreateDebugMessenger() {
     static PFN_vkDebugUtilsMessengerCallbackEXT DebugUtilsMessengerCallback = [](VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                                                  VkDebugUtilsMessageTypeFlagsEXT messageTypes,
                                                                                  const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -75,7 +75,7 @@ ResultType GraphicsBase::CreateDebugMessenger() {
     return VK_RESULT_MAX_ENUM;
 }
 
-ResultType GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice, bool enableGraphicsQueue, bool enableComputeQueue, uint32_t (&queueFamilyIndices)[3]) {
+ResultType Context::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice, bool enableGraphicsQueue, bool enableComputeQueue, uint32_t (&queueFamilyIndices)[3]) {
     uint32_t queueFamilyCount;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
     if (!queueFamilyCount) {
@@ -129,7 +129,7 @@ ResultType GraphicsBase::GetQueueFamilyIndices(VkPhysicalDevice physicalDevice, 
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::CreateSwapChainInternal() {
+ResultType Context::CreateSwapChainInternal() {
     if (ResultType result = vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to create a swap chain! Error: {}({})\n", string_VkResult(result), int32_t(result));
         return result;
@@ -165,115 +165,115 @@ ResultType GraphicsBase::CreateSwapChainInternal() {
 // ==================================================
 // Public
 // ==================================================
-GraphicsBase& GraphicsBase::GetInstance() {
+Context& Context::GetInstance() {
     return singleton;
 }
 
-uint32_t GraphicsBase::GetApiVersion() const {
+uint32_t Context::GetApiVersion() const {
     return apiVersion;
 }
 
-VkInstance GraphicsBase::GetInstanceHandle() const {
+VkInstance Context::GetInstanceHandle() const {
     return instance;
 }
 
-const std::vector<const char*>& GraphicsBase::GetInstanceLayers() const {
+const std::vector<const char*>& Context::GetInstanceLayers() const {
     return instanceLayers;
 }
 
-const std::vector<const char*>& GraphicsBase::GetInstanceExtensions() const {
+const std::vector<const char*>& Context::GetInstanceExtensions() const {
     return instanceExtensions;
 }
 
-VkSurfaceKHR GraphicsBase::GetSurface() const {
+VkSurfaceKHR Context::GetSurface() const {
     return surface;
 }
 
-VkPhysicalDevice GraphicsBase::GetPhysicalDevice() const {
+VkPhysicalDevice Context::GetPhysicalDevice() const {
     return physicalDevice;
 }
 
-VkPhysicalDeviceProperties GraphicsBase::GetPhysicalDeviceProperties() const {
+VkPhysicalDeviceProperties Context::GetPhysicalDeviceProperties() const {
     return physicalDeviceProperties;
 }
 
-VkPhysicalDeviceMemoryProperties GraphicsBase::GetPhysicalDeviceMemoryProperties() const {
+VkPhysicalDeviceMemoryProperties Context::GetPhysicalDeviceMemoryProperties() const {
     return physicalDeviceMemoryProperties;
 }
 
-VkPhysicalDevice GraphicsBase::GetAvailablePhysicalDevice(uint32_t index) const {
+VkPhysicalDevice Context::GetAvailablePhysicalDevice(uint32_t index) const {
     return availablePhysicalDevices[index];
 }
 
-uint32_t GraphicsBase::GetAvailablePhysicalDeviceCount() const {
+uint32_t Context::GetAvailablePhysicalDeviceCount() const {
     return uint32_t(availablePhysicalDevices.size());
 }
 
-VkDevice GraphicsBase::GetDevice() const {
+VkDevice Context::GetDevice() const {
     return device;
 }
 
-uint32_t GraphicsBase::GetQueueFamilyIndexGraphics() const {
+uint32_t Context::GetQueueFamilyIndexGraphics() const {
     return queueFamilyIndexGraphics;
 }
 
-uint32_t GraphicsBase::GetQueueFamilyIndexPresentation() const {
+uint32_t Context::GetQueueFamilyIndexPresentation() const {
     return queueFamilyIndexPresentation;
 }
 
-uint32_t GraphicsBase::GetQueueFamilyIndexCompute() const {
+uint32_t Context::GetQueueFamilyIndexCompute() const {
     return queueFamilyIndexCompute;
 }
 
-VkQueue GraphicsBase::GetQueueGraphics() const {
+VkQueue Context::GetQueueGraphics() const {
     return queueGraphics;
 }
 
-VkQueue GraphicsBase::GetQueuePresentation() const {
+VkQueue Context::GetQueuePresentation() const {
     return queuePresentation;
 }
 
-VkQueue GraphicsBase::GetQueueCompute() const {
+VkQueue Context::GetQueueCompute() const {
     return queueCompute;
 }
 
-const std::vector<const char*>& GraphicsBase::GetDeviceExtensions() const {
+const std::vector<const char*>& Context::GetDeviceExtensions() const {
     return deviceExtensions;
 }
 
-const VkFormat& GraphicsBase::GetAvailableSurfaceFormat(uint32_t index) const {
+const VkFormat& Context::GetAvailableSurfaceFormat(uint32_t index) const {
     return availableSurfaceFormats[index].format;
 }
 
-const VkColorSpaceKHR& GraphicsBase::GetAvailableSurfaceColorSpace(uint32_t index) const {
+const VkColorSpaceKHR& Context::GetAvailableSurfaceColorSpace(uint32_t index) const {
     return availableSurfaceFormats[index].colorSpace;
 }
 
-uint32_t GraphicsBase::GetAvailableSurfaceFormatCount() const {
+uint32_t Context::GetAvailableSurfaceFormatCount() const {
     return uint32_t(availableSurfaceFormats.size());
 }
 
-VkSwapchainKHR GraphicsBase::GetSwapChain() const {
+VkSwapchainKHR Context::GetSwapChain() const {
     return swapChain;
 }
 
-VkImage GraphicsBase::GetSwapChainImage(uint32_t index) const {
+VkImage Context::GetSwapChainImage(uint32_t index) const {
     return swapChainImages[index];
 }
 
-VkImageView GraphicsBase::GetSwapChainImageView(uint32_t index) const {
+VkImageView Context::GetSwapChainImageView(uint32_t index) const {
     return swapChainImageViews[index];
 }
 
-uint32_t GraphicsBase::GetSwapChainImageCount() const {
+uint32_t Context::GetSwapChainImageCount() const {
     return uint32_t(swapChainImages.size());
 }
 
-const VkSwapchainCreateInfoKHR& GraphicsBase::GetSwapChainCreateInfo() const {
+const VkSwapchainCreateInfoKHR& Context::GetSwapChainCreateInfo() const {
     return swapChainCreateInfo;
 }
 
-ResultType GraphicsBase::GetSurfaceFormats() {
+ResultType Context::GetSurfaceFormats() {
     uint32_t surfaceFormatCount;
     if (ResultType result = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of surface formats! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -290,22 +290,22 @@ ResultType GraphicsBase::GetSurfaceFormats() {
     return result;
 }
 
-ResultType GraphicsBase::UseLatestApiVersion() {
+ResultType Context::UseLatestApiVersion() {
     if (vkGetInstanceProcAddr(VK_NULL_HANDLE, "vkEnumerateInstanceVersion") != nullptr) {
         return vkEnumerateInstanceVersion(&apiVersion);
     }
     return VK_SUCCESS;
 }
 
-void GraphicsBase::PushInstanceLayer(const char* name) {
+void Context::PushInstanceLayer(const char* name) {
     AddLayerOrExtension(instanceLayers, name);
 }
 
-void GraphicsBase::PushInstanceExtension(const char* name) {
+void Context::PushInstanceExtension(const char* name) {
     AddLayerOrExtension(instanceExtensions, name);
 }
 
-ResultType GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags flags) {
+ResultType Context::CreateInstance(const void* pNext, VkInstanceCreateFlags flags) {
     if constexpr (ENABLE_DEBUG_MESSENGER) {
         PushInstanceLayer("VK_LAYER_KHRONOS_validation");
         PushInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -337,7 +337,7 @@ ResultType GraphicsBase::CreateInstance(const void* pNext, VkInstanceCreateFlags
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::CheckInstanceLayers(std::span<const char*> layersToCheck) const {
+ResultType Context::CheckInstanceLayers(std::span<const char*> layersToCheck) const {
     uint32_t layerCount;
     std::vector<VkLayerProperties> availableLayers;
     if (ResultType result = vkEnumerateInstanceLayerProperties(&layerCount, nullptr)) {
@@ -370,11 +370,11 @@ ResultType GraphicsBase::CheckInstanceLayers(std::span<const char*> layersToChec
     return VK_SUCCESS;
 }
 
-void GraphicsBase::InstanceLayers(const std::vector<const char*>& layerNames) {
+void Context::InstanceLayers(const std::vector<const char*>& layerNames) {
     instanceLayers = layerNames;
 }
 
-ResultType GraphicsBase::CheckInstanceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
+ResultType Context::CheckInstanceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
     uint32_t extensionCount;
     std::vector<VkExtensionProperties> availableExtensions;
     if (ResultType result = vkEnumerateInstanceExtensionProperties(layerName, &extensionCount, nullptr)) {
@@ -407,20 +407,20 @@ ResultType GraphicsBase::CheckInstanceExtensions(std::span<const char*> extensio
     return VK_SUCCESS;
 }
 
-void GraphicsBase::InstanceExtensions(const std::vector<const char*>& extensionNames) {
+void Context::InstanceExtensions(const std::vector<const char*>& extensionNames) {
     instanceExtensions = extensionNames;
 }
 
-void GraphicsBase::Surface(VkSurfaceKHR surface) {
+void Context::Surface(VkSurfaceKHR surface) {
     if (!this->surface)
         this->surface = surface;
 }
 
-void GraphicsBase::PushDeviceExtension(const char* extensionName) {
+void Context::PushDeviceExtension(const char* extensionName) {
     AddLayerOrExtension(deviceExtensions, extensionName);
 }
 
-ResultType GraphicsBase::GetPhysicalDevices() {
+ResultType Context::GetPhysicalDevices() {
     uint32_t deviceCount;
     if (ResultType result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the count of physical devices! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -439,7 +439,7 @@ ResultType GraphicsBase::GetPhysicalDevices() {
 }
 
 ResultType
-GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQueue, bool enableComputeQueue) {
+Context::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQueue, bool enableComputeQueue) {
     static constexpr uint32_t notFound = INT32_MAX;
     struct queueFamilyIndexCombination {
         uint32_t graphics = VK_QUEUE_FAMILY_IGNORED;
@@ -480,7 +480,7 @@ GraphicsBase::DeterminePhysicalDevice(uint32_t deviceIndex, bool enableGraphicsQ
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
+ResultType Context::CreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
     float queuePriority = 1.f;
     VkDeviceQueueCreateInfo queueCreateInfo[3] = {
         {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -549,15 +549,15 @@ ResultType GraphicsBase::CreateDevice(const void* pNext, VkDeviceCreateFlags fla
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
+ResultType Context::CheckDeviceExtensions(std::span<const char*> extensionsToCheck, const char* layerName) const {
     return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 }
 
-void GraphicsBase::DeviceExtensions(const std::vector<const char*>& extensionNames) {
+void Context::DeviceExtensions(const std::vector<const char*>& extensionNames) {
     deviceExtensions = extensionNames;
 }
 
-ResultType GraphicsBase::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
+ResultType Context::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
     bool formatIsAvailable = false;
     // colorspace default is VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, is SRGB, a standard colorspace
     if (!surfaceFormat.format) {
@@ -590,7 +590,7 @@ ResultType GraphicsBase::SetSurfaceFormat(VkSurfaceFormatKHR surfaceFormat) {
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext, VkSwapchainCreateFlagsKHR flags) {
+ResultType Context::CreateSwapChain(bool limitFrameRate, const void* pNext, VkSwapchainCreateFlagsKHR flags) {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     if (ResultType result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface capabilities! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -684,7 +684,7 @@ ResultType GraphicsBase::CreateSwapChain(bool limitFrameRate, const void* pNext,
     return VK_SUCCESS;
 }
 
-ResultType GraphicsBase::RecreateSwapChain() {
+ResultType Context::RecreateSwapChain() {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     if (ResultType result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities)) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to get the surface capabilities! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -722,23 +722,23 @@ ResultType GraphicsBase::RecreateSwapChain() {
     return VK_SUCCESS;
 }
 
-void GraphicsBase::AddCallbackCreateSwapChain(std::function<void()>& callback) {
+void Context::AddCallbackCreateSwapChain(std::function<void()>& callback) {
     callbacksCreateSwapChain.push_back(callback);
 }
 
-void GraphicsBase::AddCallbackDestroySwapChain(std::function<void()>& callback) {
+void Context::AddCallbackDestroySwapChain(std::function<void()>& callback) {
     callbacksDestroySwapChain.push_back(callback);
 }
 
-void GraphicsBase::AddCallbackCreateDevice(std::function<void()>& callback) {
+void Context::AddCallbackCreateDevice(std::function<void()>& callback) {
     callbacksCreateDevice.push_back(callback);
 }
 
-void GraphicsBase::AddCallbackDestroyDevice(std::function<void()>& callback) {
+void Context::AddCallbackDestroyDevice(std::function<void()>& callback) {
     callbacksDestroyDevice.push_back(callback);
 }
 
-ResultType GraphicsBase::RecreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
+ResultType Context::RecreateDevice(const void* pNext, VkDeviceCreateFlags flags) {
     if (ResultType result = WaitDeviceIdle()) {
         return result;
     }
@@ -766,7 +766,7 @@ ResultType GraphicsBase::RecreateDevice(const void* pNext, VkDeviceCreateFlags f
     return CreateDevice(pNext, flags);
 }
 
-ResultType GraphicsBase::WaitDeviceIdle() {
+ResultType Context::WaitDeviceIdle() {
     ResultType result = vkDeviceWaitIdle(device);
     if (result) {
         std::cout << std::format("[GraphicsBase][ERROR] Failed to wait for the device to be idle! Error: {}({})\n", string_VkResult(result), int32_t(result));
@@ -774,8 +774,8 @@ ResultType GraphicsBase::WaitDeviceIdle() {
     return result;
 }
 
-void GraphicsBase::Terminate() {
-    this->~GraphicsBase();
+void Context::Terminate() {
+    this->~Context();
     instance = VK_NULL_HANDLE;
     physicalDevice = VK_NULL_HANDLE;
     device = VK_NULL_HANDLE;
@@ -787,7 +787,7 @@ void GraphicsBase::Terminate() {
     debugUtilsMessenger = VK_NULL_HANDLE;
 }
 
-ResultType GraphicsBase::SwapImage(VkSemaphore imageIsAvailableSem) {
+ResultType Context::SwapImage(VkSemaphore imageIsAvailableSem) {
     // destroy old swap chain image view
     if (swapChainCreateInfo.oldSwapchain && swapChainCreateInfo.oldSwapchain != swapChain) {
         vkDestroySwapchainKHR(device, swapChainCreateInfo.oldSwapchain, nullptr);
@@ -809,11 +809,11 @@ ResultType GraphicsBase::SwapImage(VkSemaphore imageIsAvailableSem) {
     return VK_SUCCESS;
 }
 
-uint32_t GraphicsBase::GetCurrentImageIndex() const {
+uint32_t Context::GetCurrentImageIndex() const {
     return currentImageIndex;
 }
 
-ResultType GraphicsBase::SubmitCommandBufferGraphics(VkSubmitInfo& submitInfo, VkFence fence) const {
+ResultType Context::SubmitCommandBufferGraphics(VkSubmitInfo& submitInfo, VkFence fence) const {
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     VkResult result = vkQueueSubmit(queueGraphics, 1, &submitInfo, fence);
     if (result) {
@@ -822,7 +822,7 @@ ResultType GraphicsBase::SubmitCommandBufferGraphics(VkSubmitInfo& submitInfo, V
     return result;
 }
 
-ResultType GraphicsBase::SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkSemaphore imageIsAvailableSem, VkSemaphore renderingIsFinishedSem, VkFence fence) const {
+ResultType Context::SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkSemaphore imageIsAvailableSem, VkSemaphore renderingIsFinishedSem, VkFence fence) const {
     static constexpr VkPipelineStageFlags waitDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkSubmitInfo submitInfo = {
         .commandBufferCount = 1,
@@ -840,7 +840,7 @@ ResultType GraphicsBase::SubmitCommandBufferGraphics(VkCommandBuffer commandBuff
     return SubmitCommandBufferGraphics(submitInfo, fence);
 }
 
-ResultType GraphicsBase::SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkFence fence) const {
+ResultType Context::SubmitCommandBufferGraphics(VkCommandBuffer commandBuffer, VkFence fence) const {
     VkSubmitInfo sumbitInfo = {
         .commandBufferCount = 1,
         .pCommandBuffers = &commandBuffer,
@@ -848,7 +848,7 @@ ResultType GraphicsBase::SubmitCommandBufferGraphics(VkCommandBuffer commandBuff
     return SubmitCommandBufferGraphics(sumbitInfo, fence);
 }
 
-ResultType GraphicsBase::SubmitCommandBufferCompute(VkSubmitInfo& submitInfo, VkFence fence) const {
+ResultType Context::SubmitCommandBufferCompute(VkSubmitInfo& submitInfo, VkFence fence) const {
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     VkResult result = vkQueueSubmit(queueCompute, 1, &submitInfo, fence);
     if (result) {
@@ -857,7 +857,7 @@ ResultType GraphicsBase::SubmitCommandBufferCompute(VkSubmitInfo& submitInfo, Vk
     return result;
 }
 
-ResultType GraphicsBase::SubmitCommandBufferCompute(VkCommandBuffer commandBuffer, VkFence fence) const {
+ResultType Context::SubmitCommandBufferCompute(VkCommandBuffer commandBuffer, VkFence fence) const {
     VkSubmitInfo submitInfo = {
         .commandBufferCount = 1,
         .pCommandBuffers = &commandBuffer,
@@ -865,7 +865,7 @@ ResultType GraphicsBase::SubmitCommandBufferCompute(VkCommandBuffer commandBuffe
     return SubmitCommandBufferCompute(submitInfo, fence);
 }
 
-ResultType GraphicsBase::PresentImage(VkPresentInfoKHR& presentInfo) {
+ResultType Context::PresentImage(VkPresentInfoKHR& presentInfo) {
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     switch (VkResult result = vkQueuePresentKHR(queuePresentation, &presentInfo)) {
     case VK_SUCCESS:
@@ -879,7 +879,7 @@ ResultType GraphicsBase::PresentImage(VkPresentInfoKHR& presentInfo) {
     }
 }
 
-ResultType GraphicsBase::PresentImage(VkSemaphore renderingIsFinishedSem) {
+ResultType Context::PresentImage(VkSemaphore renderingIsFinishedSem) {
     VkPresentInfoKHR presentInfo = {
         .swapchainCount = 1,
         .pSwapchains = &swapChain,

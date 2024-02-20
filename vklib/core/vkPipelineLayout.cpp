@@ -15,7 +15,7 @@ PipelineLayout::~PipelineLayout() {
 
 ResultType PipelineLayout::Create(VkPipelineLayoutCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    VkResult result = vkCreatePipelineLayout(GraphicsBase::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
+    VkResult result = vkCreatePipelineLayout(Context::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("Failed to create pipeline layout! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

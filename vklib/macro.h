@@ -1,7 +1,7 @@
 #ifndef VULKAN_LIB_MACRO_H
 #define VULKAN_LIB_MACRO_H
 
-#include "core/vkBase.h"
+#include "core/vkContext.h"
 
 #ifndef NDEBUG
 #define ENABLE_DEBUG_MESSENGER true
@@ -12,7 +12,7 @@
 // Destroy Vulkan object handler
 #define DestroyHandleBy(Func)                                           \
     if (handle) {                                                       \
-        Func(GraphicsBase::GetInstance().GetDevice(), handle, nullptr); \
+        Func(Context::GetInstance().GetDevice(), handle, nullptr); \
         handle = VK_NULL_HANDLE;                                        \
     }
 

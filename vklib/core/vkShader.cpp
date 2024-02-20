@@ -36,7 +36,7 @@ VkPipelineShaderStageCreateInfo ShaderModule::GetStageCreateInfo(VkShaderStageFl
 
 ResultType ShaderModule::Create(VkShaderModuleCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    VkResult result = vkCreateShaderModule(GraphicsBase::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
+    VkResult result = vkCreateShaderModule(Context::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("[ShaderModule][ERROR] Failed to create a shader module! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

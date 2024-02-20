@@ -25,7 +25,7 @@ ResultType Semaphore::Create() {
 
 ResultType Semaphore::Create(VkSemaphoreCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    VkResult result = vkCreateSemaphore(GraphicsBase::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
+    VkResult result = vkCreateSemaphore(Context::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("Failed to create semaphore! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

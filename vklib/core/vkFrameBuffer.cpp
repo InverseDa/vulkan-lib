@@ -19,7 +19,7 @@ FrameBuffer::~FrameBuffer() {
 
 ResultType FrameBuffer::Create(VkFramebufferCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    VkResult result = vkCreateFramebuffer(GraphicsBase::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
+    VkResult result = vkCreateFramebuffer(Context::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
     if (result) {
         std::cout << std::format("[FrameBuffer][ERROR] Failed to create a framebuffer! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

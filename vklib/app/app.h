@@ -1,7 +1,7 @@
 #ifndef VULKAN_LIB_APPLICATION_H
 #define VULKAN_LIB_APPLICATION_H
 
-#include "core/vkBase.h"
+#include "core/vkContext.h"
 #include "core/vkFrameBuffer.h"
 #include "core/vkRenderPass.h"
 #include "core/vkPipeline.h"
@@ -46,12 +46,12 @@ class Application {
     Vulkan::Semaphore renderingIsFinishedSem;
 
     Vulkan::CommandBuffer commandBuffer;
-    Vulkan::CommandPool commandPool = Vulkan::CommandPool(Vulkan::GraphicsBase::GetInstance().GetQueueFamilyIndexGraphics(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    Vulkan::CommandPool commandPool = Vulkan::CommandPool(Vulkan::Context::GetInstance().GetQueueFamilyIndexGraphics(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     const RenderPassWithFrameBuffers& renderPassWithFrameBuffers = Vulkan::CreateRenderPassWithFrameBuffersScreen();
 
     VkClearValue clearColor = {0.2f, 0.3f, 0.3f, 1.0f};
-    const VkExtent2D& windowSize = Vulkan::GraphicsBase::GetInstance().GetSwapChainCreateInfo().imageExtent;
+    const VkExtent2D& windowSize = Vulkan::Context::GetInstance().GetSwapChainCreateInfo().imageExtent;
 };
 } // namespace Vulkan
 

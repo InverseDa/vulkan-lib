@@ -19,7 +19,7 @@ Fence::~Fence() {
 }
 
 ResultType Fence::Wait() const {
-    VkResult result = vkWaitForFences(GraphicsBase::GetInstance().GetDevice(), 1, &handle, false, UINT64_MAX);
+    VkResult result = vkWaitForFences(Context::GetInstance().GetDevice(), 1, &handle, false, UINT64_MAX);
     if (result) {
         outStream << std::format("[Fence][ERROR] Failed to wait for fence! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
@@ -27,7 +27,7 @@ ResultType Fence::Wait() const {
 }
 
 ResultType Fence::Reset() const {
-    VkResult result = vkResetFences(GraphicsBase::GetInstance().GetDevice(), 1, &handle);
+    VkResult result = vkResetFences(Context::GetInstance().GetDevice(), 1, &handle);
     if (result) {
         outStream << std::format("[Fence][ERROR] Failed to reset fence! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
@@ -41,7 +41,7 @@ ResultType Fence::WaitAndReset() const {
 }
 
 ResultType Fence::GetStatus() const {
-    VkResult result = vkGetFenceStatus(GraphicsBase::GetInstance().GetDevice(), handle);
+    VkResult result = vkGetFenceStatus(Context::GetInstance().GetDevice(), handle);
     if (result) {
         outStream << std::format("[Fence][ERROR] Failed to get fence status! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
@@ -50,7 +50,7 @@ ResultType Fence::GetStatus() const {
 
 ResultType Fence::Create(VkFenceCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    VkResult result = vkCreateFence(GraphicsBase::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
+    VkResult result = vkCreateFence(Context::GetInstance().GetDevice(), &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("[Fence][ERROR] Failed to create fence! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }

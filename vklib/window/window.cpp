@@ -19,10 +19,10 @@ WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable,
     // Ready to initialize Vulkan
     // Push the required instance extensions
 #ifdef _WIN32
-    Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_surface");
-    Vulkan::GraphicsBase::GetInstance().PushInstanceExtension("VK_KHR_win32_surface");
+    Vulkan::Context::GetInstance().PushInstanceExtension("VK_KHR_surface");
+    Vulkan::Context::GetInstance().PushInstanceExtension("VK_KHR_win32_surface");
     // temp fix for the swap chain extension, should be removed after the swap chain is implemented
-    Vulkan::GraphicsBase::GetInstance().PushDeviceExtension("VK_KHR_swapchain");
+    Vulkan::Context::GetInstance().PushDeviceExtension("VK_KHR_swapchain");
 #else
     uint32_t extensionsCount = 0;
     const char** extensionNames;
@@ -36,32 +36,32 @@ WindowWrapper::WindowWrapper(VkExtent2D size, bool fullScreen, bool isResizable,
     }
 #endif
     // Now create the Vulkan instance
-    Vulkan::GraphicsBase::GetInstance().UseLatestApiVersion();
-    if (Vulkan::GraphicsBase::GetInstance().CreateInstance()) {
+    Vulkan::Context::GetInstance().UseLatestApiVersion();
+    if (Vulkan::Context::GetInstance().CreateInstance()) {
         throw std::runtime_error("[WindowWrapper][ERROR] Failed to create Vulkan instance!");
     }
     // Create the window surface
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     if (VkResult result = glfwCreateWindowSurface(
-            Vulkan::GraphicsBase::GetInstance().GetInstanceHandle(), window, nullptr, &surface)) {
+            Vulkan::Context::GetInstance().GetInstanceHandle(), window, nullptr, &surface)) {
         glfwTerminate();
         throw std::runtime_error("[WindowWrapper][ERROR] Failed to create window surface!");
     }
-    Vulkan::GraphicsBase::GetInstance().Surface(surface);
+    Vulkan::Context::GetInstance().Surface(surface);
     // Get the physical devices
-    if (Vulkan::GraphicsBase::GetInstance().GetPhysicalDevices() ||
-        Vulkan::GraphicsBase::GetInstance().DeterminePhysicalDevice(0, true, false) ||
-        Vulkan::GraphicsBase::GetInstance().CreateDevice()) {
+    if (Vulkan::Context::GetInstance().GetPhysicalDevices() ||
+        Vulkan::Context::GetInstance().DeterminePhysicalDevice(0, true, false) ||
+        Vulkan::Context::GetInstance().CreateDevice()) {
         throw std::runtime_error("[WindowWrapper][ERROR] Failed to get physical devices!");
     }
     // Get the swap chain
-    if (Vulkan::GraphicsBase::GetInstance().CreateSwapChain(limitFrameRate)) {
+    if (Vulkan::Context::GetInstance().CreateSwapChain(limitFrameRate)) {
         throw std::runtime_error("[WindowWrapper][ERROR] Failed to create swap chain!");
     }
 }
 
 WindowWrapper::~WindowWrapper() {
-    Vulkan::GraphicsBase::GetInstance().WaitDeviceIdle();
+    Vulkan::Context::GetInstance().WaitDeviceIdle();
     glfwTerminate();
 }
 

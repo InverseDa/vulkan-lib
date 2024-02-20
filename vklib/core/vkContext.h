@@ -19,16 +19,16 @@
 #endif
 
 namespace Vulkan {
-class GraphicsBase {
+class Context {
   private:
     // Vulkan api version
     uint32_t apiVersion = VK_API_VERSION_1_0;
     // Singleton
-    static GraphicsBase singleton;
+    static Context singleton;
     // Constructor and destructor
-    GraphicsBase() = default;
-    GraphicsBase(GraphicsBase&&) = delete;
-    ~GraphicsBase();
+    Context() = default;
+    Context(Context&&) = delete;
+    ~Context();
 
     // vk instance and its layers and extensions
     VkInstance instance;
@@ -80,7 +80,7 @@ class GraphicsBase {
     uint32_t currentImageIndex = 0;
 
   public:
-    static GraphicsBase& GetInstance();
+    static Context& GetInstance();
     // Getter
     uint32_t GetApiVersion() const;
     //// vk instance and its layers and extensions

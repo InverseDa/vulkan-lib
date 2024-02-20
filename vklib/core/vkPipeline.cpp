@@ -19,7 +19,7 @@ Pipeline::~Pipeline() {
 
 ResultType Pipeline::Create(VkGraphicsPipelineCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    VkResult result = vkCreateGraphicsPipelines(GraphicsBase::GetInstance().GetDevice(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle);
+    VkResult result = vkCreateGraphicsPipelines(Context::GetInstance().GetDevice(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("[Pipeline][ERROR] Failed to create a graphics pipeline! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
@@ -28,7 +28,7 @@ ResultType Pipeline::Create(VkGraphicsPipelineCreateInfo& createInfo) {
 
 ResultType Pipeline::Create(VkComputePipelineCreateInfo& createInfo) {
     createInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    VkResult result = vkCreateComputePipelines(GraphicsBase::GetInstance().GetDevice(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle);
+    VkResult result = vkCreateComputePipelines(Context::GetInstance().GetDevice(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle);
     if (result) {
         outStream << std::format("[Pipeline][ERROR] Failed to create a compute pipeline! Error: {}({})\n", string_VkResult(result), int32_t(result));
     }
