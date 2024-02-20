@@ -7,6 +7,9 @@ Application::Application(uint32_t width, uint32_t height, bool fullScreen, bool 
     CreatePipeline();
 }
 
+Application::~Application() {
+}
+
 void Application::CreatePipeLineLayout() {
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
     pipelineLayout.Create(pipelineLayoutCreateInfo);
@@ -34,7 +37,7 @@ void Application::CreatePipeline() {
         pipeline.Create(pipelineCreateInfoPack);
     };
     std::function<void()> Destroy = [&]() {
-        pipeline.~Pipeline();
+//        pipeline.~Pipeline();
     };
     Vulkan::Context::GetInstance().AddCallbackCreateSwapChain(Create);
     Vulkan::Context::GetInstance().AddCallbackDestroySwapChain(Destroy);
@@ -65,6 +68,7 @@ int Application::Run(const std::function<void()>& func) {
             Vulkan::Context::GetInstance().PresentImage(renderingIsFinishedSem);
             window.PollEvents();
         }
+        commandPool.FreeBuffers(commandBuffer);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;

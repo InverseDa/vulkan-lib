@@ -24,7 +24,7 @@ class Application {
     Application(Application&&) = delete;
     Application& operator=(const Application&) = delete;
     Application& operator=(Application&&) = delete;
-    ~Application() = default;
+    ~Application();
 
     void CreatePipeLineLayout();
     void CreatePipeline();

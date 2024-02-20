@@ -14,6 +14,7 @@ Pipeline::Pipeline(Pipeline&& other) noexcept {
 }
 
 Pipeline::~Pipeline() {
+//    Vulkan::Context::GetInstance().WaitDeviceIdle();
     DestroyHandleBy(vkDestroyPipeline);
 }
 
