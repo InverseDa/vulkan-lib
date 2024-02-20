@@ -12,6 +12,7 @@ class FrameBuffer {
     FrameBuffer() = default;
     FrameBuffer(VkFramebufferCreateInfo& createInfo);
     FrameBuffer(FrameBuffer&& other) noexcept;
+    FrameBuffer(const FrameBuffer& frameBuffer);
     ~FrameBuffer();
 
     // Getter

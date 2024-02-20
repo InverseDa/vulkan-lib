@@ -10,6 +10,7 @@
 #include <vector>
 #include <span>
 #include <iostream>
+#include <functional>
 
 #ifdef __APPLE__
 #include "core/format.h"
@@ -71,10 +72,10 @@ class GraphicsBase {
     VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
     ResultType CreateSwapChainInternal();
     // callback function vector
-    std::vector<void (*)()> callbacksCreateSwapChain;
-    std::vector<void (*)()> callbacksDestroySwapChain;
-    std::vector<void (*)()> callbacksCreateDevice;
-    std::vector<void (*)()> callbacksDestroyDevice;
+    std::vector<std::function<void()>> callbacksCreateSwapChain;
+    std::vector<std::function<void()>> callbacksDestroySwapChain;
+    std::vector<std::function<void()>> callbacksCreateDevice;
+    std::vector<std::function<void()>> callbacksDestroyDevice;
     // current image index
     uint32_t currentImageIndex = 0;
 
@@ -156,10 +157,10 @@ class GraphicsBase {
     // Functions that recreate the swap chain
     ResultType RecreateSwapChain();
     // Callback functions
-    void AddCallbackCreateSwapChain(void (*callback)());
-    void AddCallbackDestroySwapChain(void (*callback)());
-    void AddCallbackCreateDevice(void (*callback)());
-    void AddCallbackDestroyDevice(void (*callback)());
+    void AddCallbackCreateSwapChain(std::function<void()>& callback);
+    void AddCallbackDestroySwapChain(std::function<void()>& callback);
+    void AddCallbackCreateDevice(std::function<void()>& callback);
+    void AddCallbackDestroyDevice(std::function<void()>& callback);
     // Functions that swap the image
     ResultType SwapImage(VkSemaphore imageIsAvailableSem);
     uint32_t GetCurrentImageIndex() const;

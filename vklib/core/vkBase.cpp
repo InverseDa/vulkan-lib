@@ -722,19 +722,19 @@ ResultType GraphicsBase::RecreateSwapChain() {
     return VK_SUCCESS;
 }
 
-void GraphicsBase::AddCallbackCreateSwapChain(void (*callback)()) {
+void GraphicsBase::AddCallbackCreateSwapChain(std::function<void()>& callback) {
     callbacksCreateSwapChain.push_back(callback);
 }
 
-void GraphicsBase::AddCallbackDestroySwapChain(void (*callback)()) {
+void GraphicsBase::AddCallbackDestroySwapChain(std::function<void()>& callback) {
     callbacksDestroySwapChain.push_back(callback);
 }
 
-void GraphicsBase::AddCallbackCreateDevice(void (*callback)()) {
+void GraphicsBase::AddCallbackCreateDevice(std::function<void()>& callback) {
     callbacksCreateDevice.push_back(callback);
 }
 
-void GraphicsBase::AddCallbackDestroyDevice(void (*callback)()) {
+void GraphicsBase::AddCallbackDestroyDevice(std::function<void()>& callback) {
     callbacksDestroyDevice.push_back(callback);
 }
 

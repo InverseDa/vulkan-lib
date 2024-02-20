@@ -9,6 +9,10 @@ FrameBuffer::FrameBuffer(FrameBuffer&& other) noexcept {
     MoveHandle;
 }
 
+FrameBuffer::FrameBuffer(const FrameBuffer& frameBuffer) {
+    handle = frameBuffer.handle;
+}
+
 FrameBuffer::~FrameBuffer() {
     DestroyHandleBy(vkDestroyFramebuffer);
 }

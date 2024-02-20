@@ -29,7 +29,7 @@
 
 // Get handle address
 #define DefineAddressFunction                 \
-    auto Address() const { \
+    auto GetHandleAddress() const { \
         return &handle;                       \
     }
 

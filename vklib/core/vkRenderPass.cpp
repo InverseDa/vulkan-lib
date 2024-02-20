@@ -9,9 +9,8 @@ RenderPass::RenderPass(RenderPass&& other) noexcept {
     MoveHandle;
 }
 
-RenderPass& RenderPass::operator=(RenderPass&& other) noexcept {
-    MoveHandle;
-    return *this;
+RenderPass::RenderPass(const RenderPass& pass) {
+    handle = pass.handle;
 }
 
 RenderPass::~RenderPass() {
@@ -105,7 +104,7 @@ const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
             .pDependencies = &subpassDependency,
         };
         renderPassWithFrameBuffers.renderPass.Create(renderPassCreateInfo);
-        auto CreateFrameBuffers = [] {
+        std::function<void()> CreateFrameBuffers = []() {
             renderPassWithFrameBuffers.frameBuffers.resize(GraphicsBase::GetInstance().GetSwapChainImageCount());
             // TODO: may use window size
             VkFramebufferCreateInfo framebufferCreateInfo = {
@@ -121,7 +120,7 @@ const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
                 renderPassWithFrameBuffers.frameBuffers[i].Create(framebufferCreateInfo);
             }
         };
-        auto DestroyFrameBuffers = [] {
+        std::function<void()> DestroyFrameBuffers = []() {
             renderPassWithFrameBuffers.frameBuffers.clear();
         };
         GraphicsBase::GetInstance().AddCallbackCreateSwapChain(CreateFrameBuffers);

@@ -15,9 +15,6 @@ class Fence {
     Fence(Fence&& other) noexcept;
     ~Fence();
 
-    Fence& operator=(const Fence&) = delete;
-    Fence& operator=(Fence&&) = delete;
-
     // Getter
     DefineHandleTypeOperator;
     DefineAddressFunction;

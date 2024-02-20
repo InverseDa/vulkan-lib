@@ -16,7 +16,7 @@ class RenderPass {
     RenderPass() = default;
     RenderPass(VkRenderPassCreateInfo& renderPassCreateInfo);
     RenderPass(RenderPass&& other) noexcept;
-    RenderPass& operator=(RenderPass&& other) noexcept;
+    RenderPass(const RenderPass &pass);
     ~RenderPass();
 
     // Getter
