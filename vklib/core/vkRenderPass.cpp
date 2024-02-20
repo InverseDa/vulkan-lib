@@ -121,7 +121,7 @@ const RenderPassWithFrameBuffers& CreateRenderPassWithFrameBuffersScreen() {
             }
         };
         std::function<void()> DestroyFrameBuffers = []() {
-            renderPassWithFrameBuffers.frameBuffers.clear();
+//            renderPassWithFrameBuffers.frameBuffers.clear();
         };
         Context::GetInstance().AddCallbackCreateSwapChain(CreateFrameBuffers);
         Context::GetInstance().AddCallbackDestroySwapChain(DestroyFrameBuffers);

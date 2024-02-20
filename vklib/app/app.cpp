@@ -8,6 +8,7 @@ Application::Application(uint32_t width, uint32_t height, bool fullScreen, bool 
 }
 
 Application::~Application() {
+    commandPool.FreeBuffers(commandBuffer);
 }
 
 void Application::CreatePipeLineLayout() {
@@ -68,7 +69,6 @@ int Application::Run(const std::function<void()>& func) {
             Vulkan::Context::GetInstance().PresentImage(renderingIsFinishedSem);
             window.PollEvents();
         }
-        commandPool.FreeBuffers(commandBuffer);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
