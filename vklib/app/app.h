@@ -10,7 +10,7 @@
 #include "window/window.h"
 #include "synchronize/vkFence.h"
 #include "synchronize/vkSemaphore.h"
-#include "command/vkCommand.h"
+#include "core/command/vkCommand.h"
 #include "type/pipeline/graphicsCreateInfoPack.h"
 #include "glm/glm.hpp"
 
