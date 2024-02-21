@@ -9,7 +9,6 @@
 namespace Vulkan {
 class Fence {
   public:
-    Fence() = default;
     Fence(VkFenceCreateInfo& createInfo);
     Fence(VkFenceCreateFlags flags = 0);
     Fence(Fence&& other) noexcept;
