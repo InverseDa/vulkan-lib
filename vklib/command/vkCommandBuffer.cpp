@@ -1,4 +1,4 @@
-#include "command.h"
+#include "vkCommand.h"
 
 namespace Vulkan {
 CommandBuffer::CommandBuffer(CommandBuffer&& other) noexcept {

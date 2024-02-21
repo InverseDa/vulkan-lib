@@ -1,5 +1,5 @@
-#ifndef VULKAN_LIB_COMMAND_H
-#define VULKAN_LIB_COMMAND_H
+#ifndef VULKAN_LIB_VKCOMMAND_H
+#define VULKAN_LIB_VKCOMMAND_H
 
 #include "macro.h"
 #include "type/vkResult.h"
@@ -54,4 +54,4 @@ class CommandPool {
 };
 } // namespace Vulkan
 
-#endif // VULKAN_LIB_COMMAND_H
+#endif // VULKAN_LIB_VKCOMMAND_H

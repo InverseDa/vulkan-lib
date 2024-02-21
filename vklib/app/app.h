@@ -10,8 +10,9 @@
 #include "window/window.h"
 #include "synchronize/fence.h"
 #include "synchronize/semaphore.h"
-#include "command/command.h"
+#include "command/vkCommand.h"
 #include "type/pipeline/graphicsCreateInfoPack.h"
+#include "glm/glm.hpp"
 
 #include <vector>
 #include <functional>
@@ -31,7 +32,7 @@ class Application {
 
     int Run(const std::function<void()>& func);
 
-    // Getter
+    // GetterRe
     VkCommandBuffer GetCommandBuffer() const { return commandBuffer; }
     VkPipeline GetPipeline() const { return pipeline; }
 

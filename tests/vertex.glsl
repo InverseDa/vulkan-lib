@@ -1,12 +1,12 @@
 #version 460
 #pragma shader_stage(vertex)
 
-vec2 position[3] = {
-{ 0, -.5f },
-{ -.5f, .5f },
-{ .5f, .5f },
-};
+layout(location = 0) in vec2 position;
+layout(location = 1) in vec4 color;
+
+layout(location = 0)out vec4 vColor;
 
 void main() {
-    gl_Position = vec4(position[gl_VertexIndex], 0, 1);
+    gl_Position = vec4(position, 0, 1);
+    vColor = color;
 }

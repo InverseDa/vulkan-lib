@@ -5,7 +5,7 @@
 #include "vulkan/vk_enum_string_helper.h"
 #include "macro.h"
 #include "type/vkResult.h"
-#include "type/ostream.h"
+#include "core/ostream.h"
 
 #include <vector>
 #include <span>

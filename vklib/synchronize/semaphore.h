@@ -4,7 +4,7 @@
 #include "vulkan/vulkan.h"
 #include "macro.h"
 #include "type/vkResult.h"
-#include "type/ostream.h"
+#include "core/ostream.h"
 
 namespace Vulkan {
 class Semaphore {
