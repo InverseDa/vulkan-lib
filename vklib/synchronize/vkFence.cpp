@@ -1,4 +1,4 @@
-#include "fence.h"
+#include "vkFence.h"
 
 namespace Vulkan {
 

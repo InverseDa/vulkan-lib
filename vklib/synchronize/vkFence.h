@@ -1,5 +1,5 @@
-#ifndef VULKAN_LIB_FENCE_H
-#define VULKAN_LIB_FENCE_H
+#ifndef VULKAN_LIB_VKFENCE_H
+#define VULKAN_LIB_VKFENCE_H
 
 #include "vulkan/vulkan.h"
 #include "macro.h"
@@ -32,4 +32,4 @@ class Fence {
 };
 } // namespace Vulkan
 
-#endif // VULKAN_LIB_FENCE_H
+#endif // VULKAN_LIB_VKFENCE_H

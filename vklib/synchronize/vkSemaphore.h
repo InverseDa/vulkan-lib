@@ -1,5 +1,5 @@
-#ifndef VULKAN_LIB_SEMAPHORE_H
-#define VULKAN_LIB_SEMAPHORE_H
+#ifndef VULKAN_LIB_VKSEMAPHORE_H
+#define VULKAN_LIB_VKSEMAPHORE_H
 
 #include "vulkan/vulkan.h"
 #include "macro.h"
@@ -26,4 +26,4 @@ class Semaphore {
 };
 } // namespace Vulkan
 
-#endif // VULKAN_LIB_SEMAPHORE_H
+#endif // VULKAN_LIB_VKSEMAPHORE_H

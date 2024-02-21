@@ -1,4 +1,4 @@
-#include "core/vkShader.h"
+#include "vkShader.h"
 
 namespace Vulkan {
 

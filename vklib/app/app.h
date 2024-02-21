@@ -1,15 +1,15 @@
 #ifndef VULKAN_LIB_APPLICATION_H
 #define VULKAN_LIB_APPLICATION_H
 
-#include "core/vkContext.h"
-#include "core/vkFrameBuffer.h"
-#include "core/vkRenderPass.h"
-#include "core/vkPipeline.h"
-#include "core/vkPipelineLayout.h"
-#include "core/vkShader.h"
+#include "core/context/vkContext.h"
+#include "core/framebuffer/vkFrameBuffer.h"
+#include "core/renderpass/vkRenderPass.h"
+#include "core/pipeline/vkPipeline.h"
+#include "core/pipeline/vkPipelineLayout.h"
+#include "core/shader/vkShader.h"
 #include "window/window.h"
-#include "synchronize/fence.h"
-#include "synchronize/semaphore.h"
+#include "synchronize/vkFence.h"
+#include "synchronize/vkSemaphore.h"
 #include "command/vkCommand.h"
 #include "type/pipeline/graphicsCreateInfoPack.h"
 #include "glm/glm.hpp"

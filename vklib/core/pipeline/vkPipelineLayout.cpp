@@ -1,4 +1,4 @@
-#include "core/vkPipelineLayout.h"
+#include "vkPipelineLayout.h"
 
 namespace Vulkan {
 PipelineLayout::PipelineLayout(VkPipelineLayoutCreateInfo& createInfo) {
