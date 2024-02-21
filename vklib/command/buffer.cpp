@@ -39,13 +39,13 @@ ResultType CommandBuffer::End() const {
     return result;
 }
 
-void CommandBuffer::SetBuffers(VkCommandBufferUsageFlags usageFlags, const std::function<void()>& func) const {
+void CommandBuffer::Record(VkCommandBufferUsageFlags usageFlags, const std::function<void()>& func) const {
     Begin(usageFlags);
     func();
     End();
 }
 
-void CommandBuffer::SetBuffers(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo, const std::function<void()>& func) const {
+void CommandBuffer::Record(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo, const std::function<void()>& func) const {
     Begin(usageFlags, inheritanceInfo);
     func();
     End();

@@ -21,8 +21,8 @@ class CommandBuffer {
     ResultType Begin(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo) const;
     ResultType End() const;
 
-    void SetBuffers(VkCommandBufferUsageFlags usageFlags, const std::function<void()>& func) const;
-    void SetBuffers(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo, const std::function<void()>& func) const;
+    void Record(VkCommandBufferUsageFlags usageFlags, const std::function<void()>& func) const;
+    void Record(VkCommandBufferUsageFlags usageFlags, VkCommandBufferInheritanceInfo& inheritanceInfo, const std::function<void()>& func) const;
 
   private:
     friend class CommandPool;

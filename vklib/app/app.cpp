@@ -58,7 +58,7 @@ int Application::Run(const std::function<void()>& func) {
             // This Area is Mouse and keyboard input
             // ========================================
             // ...
-            commandBuffer.SetBuffers(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, [&] {
+            commandBuffer.Record(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, [&] {
                 renderPassWithFrameBuffers.renderPass.SetCommands(commandBuffer, renderPassWithFrameBuffers.frameBuffers[index], {{}, windowSize}, clearColor, [&] {
                     func();
                 });
