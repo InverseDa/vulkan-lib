@@ -26,7 +26,7 @@ endforeach ()
 
 add_executable(vulkan_lib tests/main.cpp ${VKLIB_SRCS})
 
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/vklib)
+target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR})
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/include)
 

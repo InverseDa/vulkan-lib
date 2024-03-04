@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-#include "engine/engine.hpp"
+#include "vklib/engine/engine.hpp"
 
 int main(int argc, char** argv) {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -15,7 +15,17 @@ int main(int argc, char** argv) {
     bool shouldClose = false;
     SDL_Event event;
 
-    Engine::Init();
+    unsigned int count;
+    SDL_Vulkan_GetInstanceExtensions(window, &count, nullptr);
+    std::vector<const char*> extensions(count);
+    SDL_Vulkan_GetInstanceExtensions(window, &count, extensions.data());
+
+    Engine::Init(extensions, [&](vk::Instance instance) {
+        VkSurfaceKHR surface;
+        if (!SDL_Vulkan_CreateSurface(window, instance, &surface)) {
+            throw std::runtime_error("can't create surface");
+        }
+        return surface; }, 1024, 720);
 
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {

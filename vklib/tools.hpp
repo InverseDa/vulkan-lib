@@ -1,9 +1,12 @@
 #ifndef VULKAN_LIB_TOOLS_HPP
 #define VULKAN_LIB_TOOLS_HPP
 
+#include "vulkan/vulkan.hpp"
 #include <algorithm>
 #include <vector>
 #include <functional>
+
+using CreateSurfaceFunc = std::function<vk::SurfaceKHR(vk::Instance)>;
 
 namespace Vklib {
 template <typename T, typename U>
