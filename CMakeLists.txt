@@ -17,12 +17,12 @@ include(cmake/Copydll.cmake)
 set(VKLIB_DIR "${PROJECT_SOURCE_DIR}/vklib")
 set(VKLIB_SRCS)
 file(GLOB VKLIB_SUBDIRS RELATIVE ${VKLIB_DIR} ${VKLIB_DIR}/*)
-foreach(SUBDIR ${VKLIB_SUBDIRS})
-    if(IS_DIRECTORY ${VKLIB_DIR}/${SUBDIR})
+foreach (SUBDIR ${VKLIB_SUBDIRS})
+    if (IS_DIRECTORY ${VKLIB_DIR}/${SUBDIR})
         file(GLOB_RECURSE SUBDIR_SRCS "${VKLIB_DIR}/${SUBDIR}/*.cpp")
         list(APPEND VKLIB_SRCS ${SUBDIR_SRCS})
-    endif()
-endforeach()
+    endif ()
+endforeach ()
 
 add_executable(vulkan_lib tests/main.cpp ${VKLIB_SRCS})
 
@@ -32,3 +32,6 @@ target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/i
 
 target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
 target_link_libraries(vulkan_lib PRIVATE glfw)
+target_link_libraries(vulkan_lib PUBLIC SDL2)
+
+CopyDLL(vulkan_lib)
