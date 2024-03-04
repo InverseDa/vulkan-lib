@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.16.0)
-project(vulkan_lib)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+project(vulkan_lib
+        LANGUAGES CXX
+        DESCRIPTION "A simple vulkan library")
+
+include(cmake/FindVulkan.cmake)
+include(cmake/FindSDL2.cmake)
+include(cmake/FindGLFW.cmake)
+include(cmake/Copydll.cmake)
 
 # 遍历vklib/的每个文件夹里的每个cpp，并加入到编译列表中
 # 比如vklib/app/*.cpp
@@ -23,13 +30,5 @@ target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/vklib)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/include)
 
-if(APPLE)
-    find_package(Vulkan REQUIRED)
-    target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
-    target_link_libraries(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/lib/GLFW/libglfw.3.dylib)
-else()
-    find_package(Vulkan REQUIRED)
-    find_package(glfw3 REQUIRED)
-    target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
-    target_link_libraries(vulkan_lib PRIVATE glfw)
-endif()
+target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
+target_link_libraries(vulkan_lib PRIVATE glfw)
