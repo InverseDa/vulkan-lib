@@ -2,7 +2,6 @@
 #define VULKAN_LIB_LOG_HPP
 
 #include <iostream>
-#include <cstdarg>
 #include <format>
 
 enum LOG_LEVEL {
@@ -12,9 +11,8 @@ enum LOG_LEVEL {
 };
 
 namespace IO {
-inline void PrintLog(LOG_LEVEL level, const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
+template<typename... Args>
+inline void PrintLog(LOG_LEVEL level, const std::format_string<Args...>& fmt, Args&&... args) {
     switch (level) {
     case LOG_LEVEL_INFO:
         std::cout << "[INFO] ";
@@ -26,17 +24,11 @@ inline void PrintLog(LOG_LEVEL level, const char* fmt, ...) {
         std::cout << "[ERROR] ";
         break;
     }
-    std::vprintf(fmt, args);
-    std::cout << std::endl;
-    va_end(args);
+    std::cout << std::format(fmt, std::forward<Args>(args)...) << std::endl;
 }
 
 inline void ThrowError(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    std::vprintf(fmt, args);
-    std::cout << std::endl;
-    va_end(args);
+
     throw std::runtime_error("Error occurred");
 }
 

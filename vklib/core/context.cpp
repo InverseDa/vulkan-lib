@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "log/log.hpp"
 
 namespace Vklib {
 std::unique_ptr<Context> Context::instance_ = nullptr;
@@ -50,7 +51,7 @@ void Context::PickupPhysicalDevice() {
     auto devices = instance.enumeratePhysicalDevices();
     // temporary find the first device
     phyDevice = devices[0];
-    IO::PrintLog(LOG_LEVEL_INFO, "Physical Device: %s", phyDevice.getProperties().deviceName);
+    IO::PrintLog(LOG_LEVEL_INFO, "Physical Device: {}", phyDevice.getProperties().deviceName.data());
 }
 
 void Context::CreateDevice() {

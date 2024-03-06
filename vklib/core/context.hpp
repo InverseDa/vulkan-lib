@@ -7,7 +7,6 @@
 #include <iostream>
 #include <optional>
 
-#include "log/log.hpp"
 #include "vklib/tools.hpp"
 #include "vklib/swapchain/swapchain.hpp"
 

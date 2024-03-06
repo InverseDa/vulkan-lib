@@ -7,6 +7,8 @@
 #include <functional>
 #include <fstream>
 
+#include "log/log.hpp"
+
 using CreateSurfaceFunc = std::function<vk::SurfaceKHR(vk::Instance)>;
 
 template <typename T, typename U>
@@ -27,7 +29,7 @@ inline std::string ReadWholeFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
     if (!file.is_open()) {
-        IO::PrintLog(LOG_LEVEL_WARNING, "Failed to read %s", filename.c_str());
+        IO::PrintLog(LOG_LEVEL_WARNING, "Failed to read {}", filename);
         return std::string{};
     }
 
