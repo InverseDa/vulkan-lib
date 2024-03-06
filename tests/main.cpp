@@ -27,12 +27,15 @@ int main(int argc, char** argv) {
         }
         return surface; }, 1024, 720);
 
+    auto& render = Engine::GetRenderer();
+
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 shouldClose = true;
             }
         }
+        render.Render();
     }
 
     Engine::Quit();

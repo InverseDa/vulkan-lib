@@ -21,8 +21,7 @@ Swapchain::Swapchain(int w, int h) {
 
     auto& queueIndices = Context::GetInstance().queueFamilyIndices;
     if (queueIndices.graphicsQueue.value() == queueIndices.presentQueue.value()) {
-        createInfo
-            .setImageSharingMode(vk::SharingMode::eExclusive);
+        createInfo.setImageSharingMode(vk::SharingMode::eExclusive);
     } else {
         std::array indices = {queueIndices.graphicsQueue.value(), queueIndices.presentQueue.value()};
         createInfo
@@ -31,9 +30,14 @@ Swapchain::Swapchain(int w, int h) {
     }
 
     swapchain = Context::GetInstance().device.createSwapchainKHR(createInfo);
+    GetImages();
+    CreateImageViews();
 }
 
 Swapchain::~Swapchain() {
+    for (auto& framebuffer : framebuffers) {
+        Context::GetInstance().device.destroyFramebuffer(framebuffer);
+    }
     for (auto& view : imageViews) {
         Context::GetInstance().device.destroyImageView(view);
     }
@@ -94,6 +98,20 @@ void Swapchain::CreateImageViews() {
             .setFormat(info.format.format)
             .setSubresourceRange(subresourceRange);
         imageViews[i] = Context::GetInstance().device.createImageView(createInfo);
+    }
+}
+
+void Swapchain::CreateFramebuffers(int w, int h) {
+    framebuffers.resize(images.size());
+    for (int i = 0; i < framebuffers.size(); i++) {
+        vk::FramebufferCreateInfo createInfo;
+        createInfo
+            .setAttachments(imageViews[i])
+            .setWidth(w)
+            .setHeight(h)
+            .setRenderPass(Context::GetInstance().renderProcess->renderPass)
+            .setLayers(1);
+        framebuffers[i] = Context::GetInstance().device.createFramebuffer(createInfo);
     }
 }
 

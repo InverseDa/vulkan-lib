@@ -10,6 +10,7 @@
 #include "vklib/tools.hpp"
 #include "vklib/swapchain/swapchain.hpp"
 #include "vklib/render/render_process.hpp"
+#include "vklib/render/renderer.hpp"
 
 namespace Vklib {
 class Context final {
@@ -41,6 +42,7 @@ class Context final {
     vk::SurfaceKHR surface;
     std::unique_ptr<Swapchain> swapchain;
     std::unique_ptr<RenderProcess> renderProcess;
+    std::unique_ptr<Renderer> renderer;
     QueueFamilyIndices queueFamilyIndices;
 
     void InitSwapchain(int w, int h) {
@@ -49,6 +51,10 @@ class Context final {
 
     void DestroySwapchain() {
         swapchain.reset();
+    }
+
+    void InitRenderer() {
+        renderer = std::make_unique<Renderer>();
     }
 
   private:

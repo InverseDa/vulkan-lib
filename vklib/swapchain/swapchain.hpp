@@ -22,10 +22,12 @@ class Swapchain final {
     SwapchainInfo info;
     std::vector<vk::Image> images;
     std::vector<vk::ImageView> imageViews;
+    std::vector<vk::Framebuffer> framebuffers;
 
     void QueryInfo(int w, int h);
     void GetImages();
     void CreateImageViews();
+    void CreateFramebuffers(int w, int h);
 };
 } // namespace Vklib
 
