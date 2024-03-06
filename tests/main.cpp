@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     Engine::Init(extensions, [&](vk::Instance instance) {
         VkSurfaceKHR surface;
         if (!SDL_Vulkan_CreateSurface(window, instance, &surface)) {
-            throw std::runtime_error("can't create surface");
+            IO::ThrowError("SDL Can't create surface");
         }
         return surface; }, 1024, 720);
 
