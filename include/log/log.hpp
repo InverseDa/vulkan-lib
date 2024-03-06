@@ -11,7 +11,7 @@ enum LOG_LEVEL {
 };
 
 namespace IO {
-template<typename... Args>
+template <typename... Args>
 inline void PrintLog(LOG_LEVEL level, const std::format_string<Args...>& fmt, Args&&... args) {
     switch (level) {
     case LOG_LEVEL_INFO:
@@ -27,9 +27,12 @@ inline void PrintLog(LOG_LEVEL level, const std::format_string<Args...>& fmt, Ar
     std::cout << std::format(fmt, std::forward<Args>(args)...) << std::endl;
 }
 
-inline void ThrowError(const char* fmt, ...) {
-
-    throw std::runtime_error("Error occurred");
+template <typename... Args>
+inline void ThrowError(const std::format_string<Args...>& fmt, Args&&... args) {
+    auto msg = std::format(fmt, std::forward<Args>(args)...);
+    msg = "[ERROR] " + msg;
+    std::cout << msg << std::endl;
+    throw std::runtime_error(msg);
 }
 
 } // namespace IO
