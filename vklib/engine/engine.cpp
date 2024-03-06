@@ -1,24 +1,28 @@
 #include "engine.hpp"
 
-namespace Engine {
-void Init(const std::vector<const char*>& extensions, CreateSurfaceFunc func, int w, int h) {
-    Vklib::Context::Init(extensions, func);
-    Vklib::Context::GetInstance().InitSwapchain(w, h);
-    Vklib::Shader::Init(ReadWholeFile("shaders/vert.spv"), ReadWholeFile("shaders/frag.spv"));
-    Vklib::Context::GetInstance().renderProcess->InitRenderPass();
-    Vklib::Context::GetInstance().renderProcess->InitLayout();
-    Vklib::Context::GetInstance().swapchain->CreateFramebuffers(w, h);
-    Vklib::Context::GetInstance().renderProcess->InitPipeline(w, h);
-    Vklib::Context::GetInstance().InitRenderer();
+namespace Vklib {
+std::unique_ptr<Renderer> renderer_;
+
+void Init(std::vector<const char*>& extensions, Context::GetSurfaceCallback cb, int windowWidth, int windowHeight) {
+    Context::Init(extensions, cb);
+    auto& ctx = Context::GetInstance();
+    ctx.InitSwapchain(windowWidth, windowHeight);
+    ctx.InitRenderProcess();
+    ctx.InitGraphicsPipeline();
+    ctx.swapchain->InitFramebuffers();
+    ctx.InitCommandPool();
+
+    renderer_ = std::make_unique<Renderer>();
 }
 
 void Quit() {
-    Vklib::Context::GetInstance().device.waitIdle();
-    Vklib::Context::GetInstance().renderer.reset();
-    Vklib::Context::GetInstance().renderProcess.reset();
-    Vklib::Context::GetInstance().DestroySwapchain();
-    Vklib::Shader::Quit();
-    Vklib::Context::Quit();
+    Context::GetInstance().device.waitIdle();
+    renderer_.reset();
+    Context::Quit();
 }
 
-} // namespace Engine
+Renderer* GetRenderer() {
+    return renderer_.get();
+}
+
+} // namespace Vklib

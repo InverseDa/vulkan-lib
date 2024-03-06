@@ -4,17 +4,14 @@
 #include "vulkan/vulkan.hpp"
 
 #include "vklib/core/context.hpp"
-#include "vklib/shader/shader.hpp"
 #include "vklib/render/renderer.hpp"
 
-namespace Engine {
-void Init(const std::vector<const char*>& extensions, CreateSurfaceFunc func, int w, int h);
+namespace Vklib {
+void Init(std::vector<const char*>& extensions, Context::GetSurfaceCallback cb, int windowWidth, int windowHeight);
 void Quit();
 
-inline Vklib::Renderer& GetRenderer() {
-    return *Vklib::Context::GetInstance().renderer;
-}
+Renderer* GetRenderer();
 
-} // namespace Engine
+} // namespace Vklib
 
 #endif // VULKAN_LIB_ENGINE_HPP

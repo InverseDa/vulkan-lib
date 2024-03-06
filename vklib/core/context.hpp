@@ -11,63 +11,56 @@
 #include "vklib/swapchain/swapchain.hpp"
 #include "vklib/render/render_process.hpp"
 #include "vklib/render/renderer.hpp"
+#include "vklib/cmd/command_mgr.hpp"
 
 namespace Vklib {
 class Context final {
   public:
-    static void Init(const std::vector<const char*>& extensions, CreateSurfaceFunc func);
+    using GetSurfaceCallback = std::function<vk::SurfaceKHR(vk::Instance)>;
+    friend void Init(std::vector<const char*>&, GetSurfaceCallback, int, int);
+
+    static void Init(std::vector<const char*>& extensions, GetSurfaceCallback);
     static void Quit();
 
-    static Context& GetInstance() {
-        assert(instance_);
-        return *instance_;
-    }
+    static Context& GetInstance();
 
-    ~Context();
+    struct QueueInfo final {
+        std::optional<std::uint32_t> graphicsIndex;
+        std::optional<std::uint32_t> presentIndex;
 
-    struct QueueFamilyIndices final {
-        std::optional<uint32_t> graphicsQueue;
-        std::optional<uint32_t> presentQueue;
-
-        operator bool() const {
-            return graphicsQueue.has_value() && presentQueue.has_value();
+        operator bool() {
+            return graphicsIndex.has_value() && presentIndex.has_value();
         }
-    };
+    } queueInfo;
 
     vk::Instance instance;
     vk::PhysicalDevice phyDevice;
     vk::Device device;
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
-    vk::SurfaceKHR surface;
     std::unique_ptr<Swapchain> swapchain;
     std::unique_ptr<RenderProcess> renderProcess;
-    std::unique_ptr<Renderer> renderer;
-    QueueFamilyIndices queueFamilyIndices;
-
-    void InitSwapchain(int w, int h) {
-        swapchain = std::make_unique<Swapchain>(w, h);
-    }
-
-    void DestroySwapchain() {
-        swapchain.reset();
-    }
-
-    void InitRenderer() {
-        renderer = std::make_unique<Renderer>();
-    }
+    std::unique_ptr<CommandMgr> commandMgr;
 
   private:
-    static std::unique_ptr<Context> instance_;
+    static Context* instance_;
+    vk::SurfaceKHR surface_;
 
-    Context(const std::vector<const char*>& extensions, CreateSurfaceFunc func);
+    GetSurfaceCallback getSurfaceCb_ = nullptr;
 
-    void CreateInstance(const std::vector<const char*>& extensions);
-    void PickupPhysicalDevice();
-    void CreateDevice();
-    void GetQueues();
+    Context(std::vector<const char*>& extensions, GetSurfaceCallback);
+    ~Context();
 
-    void QueryQueueFamilyIndices();
+    void InitRenderProcess();
+    void InitSwapchain(int windowWidth, int windowHeight);
+    void InitGraphicsPipeline();
+    void InitCommandPool();
+
+    vk::Instance CreateInstance(std::vector<const char*>& extensions);
+    vk::PhysicalDevice PickupPhysicalDevice();
+    vk::Device CreateDevice(vk::SurfaceKHR);
+
+    void QueryQueueInfo(vk::SurfaceKHR);
 };
 } // namespace Vklib
 

@@ -9,8 +9,6 @@
 
 #include "log/log.hpp"
 
-using CreateSurfaceFunc = std::function<vk::SurfaceKHR(vk::Instance)>;
-
 template <typename T, typename U>
 void RemoveUnsupportedElems(std::vector<T>& elems, const std::vector<U>& supportedElems, std::function<bool(const T&, const U&)> eq) {
     int i = 0;
@@ -25,17 +23,16 @@ void RemoveUnsupportedElems(std::vector<T>& elems, const std::vector<U>& support
     }
 }
 
-inline std::string ReadWholeFile(const std::string& filename) {
+inline std::vector<char> ReadWholeFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
     if (!file.is_open()) {
         IO::PrintLog(LOG_LEVEL_WARNING, "Failed to read {}", filename);
-        return std::string{};
+        return std::vector<char>{};
     }
 
     auto size = file.tellg();
-    std::string content;
-    content.resize(size);
+    std::vector<char> content(size);
     file.seekg(0);
 
     file.read(content.data(), content.size());

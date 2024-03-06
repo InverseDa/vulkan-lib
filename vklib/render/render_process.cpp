@@ -1,104 +1,149 @@
 #include "render_process.hpp"
-#include "vklib/shader/shader.hpp"
 #include "vklib/core/context.hpp"
+#include "vklib/mesh/vertex.hpp"
 
 namespace Vklib {
-void RenderProcess::InitPipeline(int width, int height) {
+
+RenderProcess::RenderProcess() {
+    layout = CreateLayout();
+    renderPass = CreateRenderPass();
+    graphicsPipeline = nullptr;
+}
+
+RenderProcess::~RenderProcess() {
+    auto& ctx = Context::GetInstance();
+    ctx.device.destroyRenderPass(renderPass);
+    ctx.device.destroyPipelineLayout(layout);
+    ctx.device.destroyPipeline(graphicsPipeline);
+}
+
+void RenderProcess::RecreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource) {
+    if (graphicsPipeline) {
+        Context::GetInstance().device.destroyPipeline(graphicsPipeline);
+    }
+    graphicsPipeline = CreateGraphicsPipeline(vertexSource, fragSource);
+}
+
+void RenderProcess::RecreateRenderPass() {
+    if (renderPass) {
+        Context::GetInstance().device.destroyRenderPass(renderPass);
+    }
+    renderPass = CreateRenderPass();
+}
+
+vk::PipelineLayout RenderProcess::CreateLayout() {
+    vk::PipelineLayoutCreateInfo createInfo;
+    createInfo
+        .setPushConstantRangeCount(0)
+        .setSetLayoutCount(0);
+    return Context::GetInstance().device.createPipelineLayout(createInfo);
+}
+
+vk::Pipeline RenderProcess::CreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource) {
+    auto& ctx = Context::GetInstance();
+
     vk::GraphicsPipelineCreateInfo createInfo;
 
+    // shader source
+    vk::ShaderModuleCreateInfo vertexModuleCreateInfo, fragModuleCreateInfo;
+    vertexModuleCreateInfo
+        .setCodeSize(vertexSource.size())
+        .setPCode((std::uint32_t*)vertexSource.data());
+    fragModuleCreateInfo
+        .setCodeSize(fragSource.size())
+        .setPCode((std::uint32_t*)fragSource.data());
+
+    auto vertexModule = ctx.device.createShaderModule(vertexModuleCreateInfo);
+    auto fragModule = ctx.device.createShaderModule(fragModuleCreateInfo);
+
+    std::array<vk::PipelineShaderStageCreateInfo, 2> stageCreateInfos;
+    stageCreateInfos[0]
+        .setModule(vertexModule)
+        .setPName("main")
+        .setStage(vk::ShaderStageFlagBits::eVertex);
+    stageCreateInfos[1]
+        .setModule(fragModule)
+        .setPName("main")
+        .setStage(vk::ShaderStageFlagBits::eFragment);
+
     // vertex input
-    vk::PipelineVertexInputStateCreateInfo inputState;
-    createInfo.setPVertexInputState(&inputState);
+    vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo;
+    auto attribute = Vertex::GetAttribute();
+    auto binding = Vertex::GetBinding();
+    vertexInputStateCreateInfo
+        .setVertexAttributeDescriptions(attribute)
+        .setVertexBindingDescriptions(binding);
 
     // vertex assembly
-    vk::PipelineInputAssemblyStateCreateInfo inputAsm;
-    inputAsm
+    vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo;
+    inputAssemblyStateCreateInfo
         .setPrimitiveRestartEnable(false)
         .setTopology(vk::PrimitiveTopology::eTriangleList);
-    createInfo.setPInputAssemblyState(&inputAsm);
 
-    // shader
-    auto stages = Shader::GetInstance().GetStage();
-    createInfo.setStages(stages);
-
-    // viewport
+    // viewport and scissor
     vk::PipelineViewportStateCreateInfo viewportState;
-    vk::Viewport viewport(0, 0, width, height, 0, 1);
-    viewportState.setViewports(viewport);
-    vk::Rect2D rect({0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)});
-    viewportState.setScissors(rect);
-    createInfo.setPViewportState(&viewportState);
+    vk::Viewport viewport(0, 0, ctx.swapchain->GetExtent().width, ctx.swapchain->GetExtent().height, 0, 1);
+    vk::Rect2D scissor({0, 0}, ctx.swapchain->GetExtent());
+    viewportState
+        .setViewports(viewport)
+        .setScissors(scissor);
 
-    // rasterization
-    vk::PipelineRasterizationStateCreateInfo rastInfo;
-    rastInfo
+    // rasterizer
+    vk::PipelineRasterizationStateCreateInfo rasterInfo;
+    rasterInfo
         .setRasterizerDiscardEnable(false)
-        .setCullMode(vk::CullModeFlagBits::eBack)
+        .setCullMode(vk::CullModeFlagBits::eFront)
         .setFrontFace(vk::FrontFace::eCounterClockwise)
         .setPolygonMode(vk::PolygonMode::eFill)
-        .setLineWidth(1);
-    createInfo.setPRasterizationState(&rastInfo);
+        .setLineWidth(1)
+        .setDepthClampEnable(false);
 
-    // multisample
-    vk::PipelineMultisampleStateCreateInfo multisample;
-    multisample
+    // multisampler
+    vk::PipelineMultisampleStateCreateInfo multisampleStateCreateInfo;
+    multisampleStateCreateInfo
         .setSampleShadingEnable(false)
         .setRasterizationSamples(vk::SampleCountFlagBits::e1);
-    createInfo.setPMultisampleState(&multisample);
 
     // TODO: stencil test and depth test
 
     // color blending
-    vk::PipelineColorBlendStateCreateInfo blend;
-    vk::PipelineColorBlendAttachmentState attachs;
-    attachs
+    vk::PipelineColorBlendAttachmentState blendAttachmentStateInfo;
+    blendAttachmentStateInfo
         .setBlendEnable(false)
         .setColorWriteMask(vk::ColorComponentFlagBits::eA | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eR);
-    blend
+    vk::PipelineColorBlendStateCreateInfo blendStateCreateInfo;
+    blendStateCreateInfo
         .setLogicOpEnable(false)
-        .setAttachments(attachs);
-    createInfo.setPColorBlendState(&blend);
+        .setAttachments(blendAttachmentStateInfo);
 
     // renderpass and layout
     createInfo
-        .setRenderPass(renderPass)
-        .setLayout(layout);
+        .setStages(stageCreateInfos)
+        .setLayout(layout)
+        .setPVertexInputState(&vertexInputStateCreateInfo)
+        .setPInputAssemblyState(&inputAssemblyStateCreateInfo)
+        .setPViewportState(&viewportState)
+        .setPRasterizationState(&rasterInfo)
+        .setPMultisampleState(&multisampleStateCreateInfo)
+        .setPColorBlendState(&blendStateCreateInfo)
+        .setRenderPass(renderPass);
 
     auto result = Context::GetInstance().device.createGraphicsPipeline(nullptr, createInfo);
     if (result.result != vk::Result::eSuccess) {
-        IO::ThrowError("Failed to create graphics pipeline");
+        IO::ThrowError("Failed to create graphics graphicsPipeline");
     }
-    pipeline = result.value;
+
+    // clear shader module
+    ctx.device.destroyShaderModule(vertexModule);
+    ctx.device.destroyShaderModule(fragModule);
+
+    return result.value;
 }
 
-void RenderProcess::InitLayout() {
-    vk::PipelineLayoutCreateInfo createInfo;
-    layout = Context::GetInstance().device.createPipelineLayout(createInfo);
-}
+vk::RenderPass RenderProcess::CreateRenderPass() {
+    auto& ctx = Context::GetInstance();
 
-void RenderProcess::InitRenderPass() {
     vk::RenderPassCreateInfo createInfo;
-    vk::AttachmentDescription attachmentDescription;
-    attachmentDescription
-        .setFormat(Context::GetInstance().swapchain->info.format.format)
-        .setInitialLayout(vk::ImageLayout::eUndefined)
-        .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal)
-        .setLoadOp(vk::AttachmentLoadOp::eClear)
-        .setStoreOp(vk::AttachmentStoreOp::eStore)
-        .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-        .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-        .setSamples(vk::SampleCountFlagBits::e1);
-    createInfo.setAttachments(attachmentDescription);
-
-    vk::AttachmentReference ref;
-    ref
-        .setLayout(vk::ImageLayout::eColorAttachmentOptimal)
-        .setAttachment(0);
-    vk::SubpassDescription subpass;
-    subpass
-        .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-        .setColorAttachments(ref);
-    createInfo.setSubpasses(subpass);
 
     vk::SubpassDependency dependency;
     dependency
@@ -107,16 +152,34 @@ void RenderProcess::InitRenderPass() {
         .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
         .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
         .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-    createInfo.setDependencies(dependency);
 
-    renderPass = Context::GetInstance().device.createRenderPass(createInfo);
-}
+    vk::AttachmentDescription attachmentDescription;
+    attachmentDescription
+        .setFormat(ctx.swapchain->GetFormat().format)
+        .setSamples(vk::SampleCountFlagBits::e1)
+        .setLoadOp(vk::AttachmentLoadOp::eClear)
+        .setStoreOp(vk::AttachmentStoreOp::eStore)
+        .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+        .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+        .setInitialLayout(vk::ImageLayout::eUndefined)
+        .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 
-RenderProcess::~RenderProcess() {
-    auto& device = Context::GetInstance().device;
-    device.destroyRenderPass(renderPass);
-    device.destroyPipelineLayout(layout);
-    device.destroyPipeline(pipeline);
+    vk::AttachmentReference reference;
+    reference
+        .setAttachment(0)
+        .setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::SubpassDescription subpassDescription;
+    subpassDescription
+        .setColorAttachments(reference)
+        .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+
+    createInfo
+        .setAttachments(attachmentDescription)
+        .setDependencies(dependency)
+        .setSubpasses(subpassDescription);
+
+    return ctx.device.createRenderPass(createInfo);
 }
 
 } // namespace Vklib

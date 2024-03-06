@@ -2,116 +2,126 @@
 #include "vklib/core/context.hpp"
 
 namespace Vklib {
-Swapchain::Swapchain(int w, int h) {
-    QueryInfo(w, h);
-
-    vk::SwapchainCreateInfoKHR createInfo;
-    createInfo
-        .setClipped(true)
-        .setImageArrayLayers(1)
-        .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
-        .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
-        .setSurface(Context::GetInstance().surface)
-        .setImageColorSpace(info.format.colorSpace)
-        .setImageFormat(info.format.format)
-        .setImageExtent(info.imageExtent)
-        .setMinImageCount(info.imageCount)
-        .setPreTransform(info.transform)
-        .setPresentMode(info.present);
-
-    auto& queueIndices = Context::GetInstance().queueFamilyIndices;
-    if (queueIndices.graphicsQueue.value() == queueIndices.presentQueue.value()) {
-        createInfo.setImageSharingMode(vk::SharingMode::eExclusive);
-    } else {
-        std::array indices = {queueIndices.graphicsQueue.value(), queueIndices.presentQueue.value()};
-        createInfo
-            .setQueueFamilyIndices(indices)
-            .setImageSharingMode(vk::SharingMode::eConcurrent);
-    }
-
-    swapchain = Context::GetInstance().device.createSwapchainKHR(createInfo);
-    GetImages();
-    CreateImageViews();
+Swapchain::Swapchain(vk::SurfaceKHR surface, int windowWidth, int windowHeight) : surface(surface) {
+    QuerySurfaceInfo(windowWidth, windowHeight);
+    swapchain = CreateSwapchain();
+    CreateImageAndViews();
 }
 
 Swapchain::~Swapchain() {
+    auto& ctx = Context::GetInstance();
+    for (auto& img : images) {
+        ctx.device.destroyImageView(img.view);
+    }
     for (auto& framebuffer : framebuffers) {
-        Context::GetInstance().device.destroyFramebuffer(framebuffer);
+        ctx.device.destroyFramebuffer(framebuffer);
     }
-    for (auto& view : imageViews) {
-        Context::GetInstance().device.destroyImageView(view);
-    }
-    Context::GetInstance().device.destroySwapchainKHR(swapchain);
+    ctx.device.destroySwapchainKHR(swapchain);
+    ctx.instance.destroySurfaceKHR(surface);
 }
 
-void Swapchain::QueryInfo(int w, int h) {
-    auto& phyDevice = Context::GetInstance().phyDevice;
-    auto& surface = Context::GetInstance().surface;
-    auto formats = phyDevice.getSurfaceFormatsKHR(surface);
-    info.format = formats[0];
-    for (const auto& format : formats) {
-        if (format.format == vk::Format::eB8G8R8A8Sint &&
-            format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
-            info.format = format;
-            break;
+void Swapchain::InitFramebuffers() {
+    CreateFramebuffers();
+}
+
+void Swapchain::QuerySurfaceInfo(int windowWidth, int windowHeight) {
+    surfaceInfo_.format = QuerySurfaceFormat();
+
+    auto capability = Context::GetInstance().phyDevice.getSurfaceCapabilitiesKHR(surface);
+    surfaceInfo_.count = std::clamp(capability.minImageCount + 1, capability.minImageCount, capability.maxImageCount);
+    surfaceInfo_.transform = capability.currentTransform;
+    surfaceInfo_.extent = QuerySurfaceExtent(capability, windowWidth, windowHeight);
+}
+
+vk::SurfaceFormatKHR Swapchain::QuerySurfaceFormat() {
+    auto formats = Context::GetInstance().phyDevice.getSurfaceFormatsKHR(surface);
+    for (auto& format : formats) {
+        if (format.format == vk::Format::eR8G8B8A8Srgb && format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            return format;
         }
     }
+    return formats[0];
+}
 
-    auto capabilities = phyDevice.getSurfaceCapabilitiesKHR(surface);
-    info.imageCount = std::clamp<uint32_t>(2, capabilities.minImageCount, capabilities.maxImageCount);
+vk::Extent2D Swapchain::QuerySurfaceExtent(const vk::SurfaceCapabilitiesKHR& capability, int windowWidth, int windowHeight) {
+    if (capability.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+        return capability.currentExtent;
+    } else {
+        auto extent = vk::Extent2D{
+            static_cast<uint32_t>(windowWidth),
+            static_cast<uint32_t>(windowHeight)
+        };
 
-    info.imageExtent.width = std::clamp<uint32_t>(w, capabilities.minImageExtent.width, capabilities.minImageExtent.width);
-    info.imageExtent.height = std::clamp<uint32_t>(h, capabilities.minImageExtent.height, capabilities.minImageExtent.height);
-
-    info.transform = capabilities.currentTransform;
-
-    auto presents = phyDevice.getSurfacePresentModesKHR(surface);
-    info.present = vk::PresentModeKHR::eFifo;
-    for (const auto& present : presents) {
-        if (present == vk::PresentModeKHR::eMailbox) {
-            info.present = present;
-            break;
-        }
+        extent.width = std::clamp(extent.width, capability.minImageExtent.width, capability.maxImageExtent.width);
+        extent.height = std::clamp(extent.height, capability.minImageExtent.height, capability.maxImageExtent.height);
+        return extent;
     }
 }
 
-void Swapchain::GetImages() {
-    images = Context::GetInstance().device.getSwapchainImagesKHR(swapchain);
+vk::SwapchainKHR Swapchain::CreateSwapchain() {
+    vk::SwapchainCreateInfoKHR createInfo;
+    createInfo
+        .setClipped(true)
+        .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+        .setImageExtent(surfaceInfo_.extent)
+        .setImageColorSpace(surfaceInfo_.format.colorSpace)
+        .setImageFormat(surfaceInfo_.format.format)
+        .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
+        .setMinImageCount(surfaceInfo_.count)
+        .setImageArrayLayers(1)
+        .setPresentMode(vk::PresentModeKHR::eFifo)
+        .setPreTransform(surfaceInfo_.transform)
+        .setSurface(surface);
+
+    auto& ctx = Context::GetInstance();
+    if (ctx.queueInfo) {
+        createInfo.setImageSharingMode(vk::SharingMode::eExclusive);
+    } else {
+        createInfo.setImageSharingMode(vk::SharingMode::eConcurrent);
+        std::array queueIndices = {ctx.queueInfo.graphicsIndex.value(), ctx.queueInfo.presentIndex.value()};
+        createInfo.setQueueFamilyIndices(queueIndices);
+    }
+
+    return ctx.device.createSwapchainKHR(createInfo);
 }
 
-void Swapchain::CreateImageViews() {
-    imageViews.resize(images.size());
-    for (size_t i = 0; i < images.size(); ++i) {
-        vk::ImageViewCreateInfo createInfo;
-        vk::ComponentMapping componentMapping;
-        vk::ImageSubresourceRange subresourceRange;
-        subresourceRange
-            .setBaseMipLevel(0)
-            .setLevelCount(1)
+void Swapchain::CreateImageAndViews() {
+    auto& ctx = Context::GetInstance();
+    auto images = ctx.device.getSwapchainImagesKHR(swapchain);
+    for (auto& image : images) {
+        Image img;
+        img.image = image;
+        vk::ImageViewCreateInfo viewCreateInfo;
+        vk::ImageSubresourceRange range;
+        range
             .setBaseArrayLayer(0)
+            .setBaseMipLevel(0)
             .setLayerCount(1)
+            .setLevelCount(1)
             .setAspectMask(vk::ImageAspectFlagBits::eColor);
-        createInfo
-            .setImage(images[i])
+        viewCreateInfo
+            .setImage(image)
+            .setFormat(surfaceInfo_.format.format)
             .setViewType(vk::ImageViewType::e2D)
-            .setComponents(componentMapping)
-            .setFormat(info.format.format)
-            .setSubresourceRange(subresourceRange);
-        imageViews[i] = Context::GetInstance().device.createImageView(createInfo);
+            .setSubresourceRange(range)
+            .setComponents(vk::ComponentMapping{});
+        img.view = ctx.device.createImageView(viewCreateInfo);
+        this->images.push_back(img);
     }
 }
 
-void Swapchain::CreateFramebuffers(int w, int h) {
-    framebuffers.resize(images.size());
-    for (int i = 0; i < framebuffers.size(); i++) {
+void Swapchain::CreateFramebuffers() {
+    for (auto& img : images) {
+        auto& view = img.view;
+
         vk::FramebufferCreateInfo createInfo;
         createInfo
-            .setAttachments(imageViews[i])
-            .setWidth(w)
-            .setHeight(h)
+            .setAttachments(view)
             .setRenderPass(Context::GetInstance().renderProcess->renderPass)
+            .setWidth(GetExtent().width)
+            .setHeight(GetExtent().height)
             .setLayers(1);
-        framebuffers[i] = Context::GetInstance().device.createFramebuffer(createInfo);
+        framebuffers.push_back(Context::GetInstance().device.createFramebuffer(createInfo));
     }
 }
 

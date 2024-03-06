@@ -6,15 +6,20 @@
 namespace Vklib {
 class RenderProcess final {
   public:
-    vk::Pipeline pipeline;
-    vk::PipelineLayout layout;
-    vk::RenderPass renderPass;
+    vk::Pipeline graphicsPipeline = nullptr;
+    vk::PipelineLayout layout = nullptr;
+    vk::RenderPass renderPass = nullptr;
 
+    RenderProcess();
     ~RenderProcess();
 
-    void InitLayout();
-    void InitRenderPass();
-    void InitPipeline(int width, int height);
+    void RecreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource);
+    void RecreateRenderPass();
+
+  private:
+    vk::PipelineLayout CreateLayout();
+    vk::Pipeline CreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource);
+    vk::RenderPass CreateRenderPass();
 };
 } // namespace Vklib
 

@@ -2,27 +2,34 @@
 #define VULKAN_LIB_RENDERER_HPP
 
 #include "vulkan/vulkan.hpp"
+#include "vklib/buffer/buffer.hpp"
 
 namespace Vklib {
 class Renderer final {
   public:
-    Renderer();
+    Renderer(int maxFightCount = 2);
     ~Renderer();
 
+    // WARNING: temporary draw triangle
+    // TODO: implement this function
     void Render();
 
   private:
-    vk::CommandPool cmdPool_;
-    vk::CommandBuffer cmdBuf_;
+    int maxFightCount_;
+    int cur_Frame_;
+    std::vector<vk::Fence> fences_;
+    std::vector<vk::Semaphore> imageAvaliableSems_;
+    std::vector<vk::Semaphore> renderFinishSems_;
+    std::vector<vk::CommandBuffer> cmdBufs_;
 
-    vk::Semaphore imageAvailable_;
-    vk::Semaphore imageDrawFinish_;
-    vk::Fence cmdAvailableFence_;
+    std::unique_ptr<Buffer> hostVertexBuffer_;
+    std::unique_ptr<Buffer> deviceVertexBuffer_;
 
-    void InitCmdPool();
-    void AllocateCmdBuf();
-    void CreateSems();
-    void CreateFence();
+    void CreateFences();
+    void CreateSemaphores();
+    void CreateCmdBuffers();
+    void CreateVertexBuffer();
+    void BufferVertexData();
 };
 } // namespace Vklib
 

@@ -2,111 +2,137 @@
 #include "log/log.hpp"
 
 namespace Vklib {
-std::unique_ptr<Context> Context::instance_ = nullptr;
+Context* Context::instance_ = nullptr;
 
-void Context::Init(const std::vector<const char*>& extensions, CreateSurfaceFunc func) {
-    instance_.reset(new Context(extensions, func));
+void Context::Init(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
+    instance_ = new Context(extensions, cb);
 }
 
 void Context::Quit() {
-    instance_.reset();
+    delete instance_;
 }
 
-Context::Context(const std::vector<const char*>& extensions, CreateSurfaceFunc func) {
-    CreateInstance(extensions);
-    PickupPhysicalDevice();
-    surface = func(instance);
-    QueryQueueFamilyIndices();
-    CreateDevice();
-    GetQueues();
-    renderProcess.reset(new RenderProcess);
+Context& Context::GetInstance() {
+    return *instance_;
+}
+
+Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
+    getSurfaceCb_ = cb;
+
+    instance = CreateInstance(extensions);
+    if (!instance) {
+        IO::ThrowError("Failed to create instance");
+    }
+
+    phyDevice = PickupPhysicalDevice();
+    if (!phyDevice) {
+        IO::ThrowError("Failed to pickup physical device");
+    }
+
+    surface_ = getSurfaceCb_(instance);
+    if (!surface_) {
+        IO::ThrowError("Failed to create surface");
+    }
+
+    device = CreateDevice(surface_);
+    if (!device) {
+        IO::ThrowError("Failed to create device");
+    }
+
+    graphicsQueue = device.getQueue(queueInfo.graphicsIndex.value(), 0);
+    presentQueue = device.getQueue(queueInfo.presentIndex.value(), 0);
 }
 
 Context::~Context() {
-    instance.destroySurfaceKHR(surface);
+    commandMgr.reset();
+    renderProcess.reset();
+    swapchain.reset();
     device.destroy();
     instance.destroy();
 }
 
-void Context::CreateInstance(const std::vector<const char*>& extensions) {
+vk::Instance Context::CreateInstance(std::vector<const char*>& extensions) {
     vk::InstanceCreateInfo createInfo;
     vk::ApplicationInfo appInfo;
     appInfo.setApiVersion(VK_VERSION_1_3);
-
-    createInfo.setPApplicationInfo(&appInfo);
-    instance = vk::createInstance(createInfo);
+    createInfo
+        .setPApplicationInfo(&appInfo)
+        .setPEnabledExtensionNames(extensions);
 
     std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
+    createInfo.setPEnabledLayerNames(layers);
 
-    RemoveUnsupportedElems<const char*, vk::LayerProperties>(layers, vk::enumerateInstanceLayerProperties(), [](const char* e1, const vk::LayerProperties& e2) {
-        return std::strcmp(e1, e2.layerName) == 0;
-    });
-    createInfo
-        .setPEnabledLayerNames(layers)
-        .setPEnabledExtensionNames(extensions);
-
-    instance = vk::createInstance(createInfo);
+    return vk::createInstance(createInfo);
 }
 
-void Context::PickupPhysicalDevice() {
+vk::PhysicalDevice Context::PickupPhysicalDevice() {
     auto devices = instance.enumeratePhysicalDevices();
-    // temporary find the first device
-    phyDevice = devices[0];
-    IO::PrintLog(LOG_LEVEL_INFO, "Physical Device: {}", phyDevice.getProperties().deviceName.data());
+    if (devices.size() == 0) {
+        IO::ThrowError("Failed to find physical devices suitable for vulkan! Make sure you have a compatible GPU installed.");
+    }
+    return devices[0];
 }
 
-void Context::CreateDevice() {
+vk::Device Context::CreateDevice(vk::SurfaceKHR surface) {
+    vk::DeviceCreateInfo deviceCreateInfo;
+    QueryQueueInfo(surface);
     std::array extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    vk::DeviceCreateInfo createInfo;
-    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+    deviceCreateInfo.setPEnabledExtensionNames(extensions);
 
-    float priorities = 1.0;
-    if (queueFamilyIndices.presentQueue.value() == queueFamilyIndices.graphicsQueue.value()) {
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+    float priority = 1.0;
+    if (queueInfo.graphicsIndex.value() == queueInfo.presentIndex.value()) {
         vk::DeviceQueueCreateInfo queueCreateInfo;
-        queueCreateInfo
-            .setPQueuePriorities(&priorities)
-            .setQueueFamilyIndex(queueFamilyIndices.graphicsQueue.value())
-            .setQueueCount(1);
-        queueCreateInfos.push_back(std::move(queueCreateInfo));
+        queueCreateInfo.setPQueuePriorities(&priority);
+        queueCreateInfo.setQueueFamilyIndex(queueInfo.graphicsIndex.value());
+        queueCreateInfo.setQueueCount(1);
+        queueCreateInfos.push_back(queueCreateInfo);
     } else {
         vk::DeviceQueueCreateInfo queueCreateInfo;
-        queueCreateInfo
-            .setPQueuePriorities(&priorities)
-            .setQueueFamilyIndex(queueFamilyIndices.graphicsQueue.value())
-            .setQueueCount(1);
-        queueCreateInfos.push_back(std::move(queueCreateInfo));
-        queueCreateInfo
-            .setPQueuePriorities(&priorities)
-            .setQueueFamilyIndex(queueFamilyIndices.presentQueue.value())
-            .setQueueCount(1);
-        queueCreateInfos.push_back(std::move(queueCreateInfo));
-    }
-    createInfo
-        .setQueueCreateInfos(queueCreateInfos)
-        .setPEnabledExtensionNames(extensions);
+        queueCreateInfo.setPQueuePriorities(&priority);
+        queueCreateInfo.setQueueFamilyIndex(queueInfo.graphicsIndex.value());
+        queueCreateInfo.setQueueCount(1);
+        queueCreateInfos.push_back(queueCreateInfo);
 
-    device = phyDevice.createDevice(createInfo);
+        queueCreateInfo.setQueueFamilyIndex(queueInfo.presentIndex.value());
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+    deviceCreateInfo.setQueueCreateInfos(queueCreateInfos);
+
+    return phyDevice.createDevice(deviceCreateInfo);
 }
 
-void Context::QueryQueueFamilyIndices() {
+void Context::QueryQueueInfo(vk::SurfaceKHR surface) {
     auto queueFamilies = phyDevice.getQueueFamilyProperties();
     for (uint32_t i = 0; i < queueFamilies.size(); i++) {
-        const auto& queueFamily = queueFamilies[i];
-        if (queueFamily.queueFlags | vk::QueueFlagBits::eGraphics) {
-            queueFamilyIndices.graphicsQueue = i;
+        if (queueFamilies[i].queueFlags | vk::QueueFlagBits::eGraphics) {
+            queueInfo.graphicsIndex = i;
         }
         if (phyDevice.getSurfaceSupportKHR(i, surface)) {
-            queueFamilyIndices.presentQueue = i;
+            queueInfo.presentIndex = i;
         }
-        if (queueFamilyIndices) {
+        if (queueInfo) {
             break;
         }
     }
 }
 
-void Context::GetQueues() {
-    graphicsQueue = device.getQueue(queueFamilyIndices.graphicsQueue.value(), 0);
-    presentQueue = device.getQueue(queueFamilyIndices.presentQueue.value(), 0);
+void Context::InitRenderProcess() {
+     renderProcess = std::make_unique<RenderProcess>();
+}
+
+void Context::InitSwapchain(int windowWidth, int windowHeight) {
+    swapchain = std::make_unique<Swapchain>(surface_, windowWidth, windowHeight);
+}
+
+void Context::InitGraphicsPipeline() {
+    auto vertexSource = ReadWholeFile("shaders/vert.spv");
+    auto fragSource = ReadWholeFile("shaders/frag.spv");
+    renderProcess->RecreateGraphicsPipeline(vertexSource, fragSource);
+}
+
+void Context::InitCommandPool() {
+    commandMgr = std::make_unique<CommandMgr>();
 }
 
 } // namespace Vklib
