@@ -4,6 +4,7 @@
 #include "vulkan/vulkan.hpp"
 
 #include "vklib/core/context.hpp"
+#include "vklib/shader/shader.hpp"
 
 namespace Engine {
 void Init(const std::vector<const char*>& extensions, CreateSurfaceFunc func, int w, int h);

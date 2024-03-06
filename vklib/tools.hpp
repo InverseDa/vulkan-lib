@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <vector>
 #include <functional>
+#include <fstream>
 
 using CreateSurfaceFunc = std::function<vk::SurfaceKHR(vk::Instance)>;
 
-namespace Vklib {
 template <typename T, typename U>
 void RemoveUnsupportedElems(std::vector<T>& elems, const std::vector<U>& supportedElems, std::function<bool(const T&, const U&)> eq) {
     int i = 0;
@@ -22,6 +22,23 @@ void RemoveUnsupportedElems(std::vector<T>& elems, const std::vector<U>& support
         }
     }
 }
-} // namespace Vklib
+
+std::string ReadWholeFile(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+
+    if (!file.is_open()) {
+        IO::PrintLog(LOG_LEVEL_WARNING, "Failed to read %s", filename.c_str());
+        return std::string{};
+    }
+
+    auto size = file.tellg();
+    std::string content;
+    content.resize(size);
+    file.seekg(0);
+
+    file.read(content.data(), content.size());
+
+    return content;
+}
 
 #endif // VULKAN_LIB_TOOLS_HPP
