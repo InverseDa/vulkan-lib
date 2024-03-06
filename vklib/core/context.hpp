@@ -9,6 +9,7 @@
 
 #include "vklib/tools.hpp"
 #include "vklib/swapchain/swapchain.hpp"
+#include "vklib/render/render_process.hpp"
 
 namespace Vklib {
 class Context final {
@@ -39,6 +40,7 @@ class Context final {
     vk::Queue presentQueue;
     vk::SurfaceKHR surface;
     std::unique_ptr<Swapchain> swapchain;
+    std::unique_ptr<RenderProcess> renderProcess;
     QueueFamilyIndices queueFamilyIndices;
 
     void InitSwapchain(int w, int h) {

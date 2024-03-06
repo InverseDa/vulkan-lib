@@ -40,6 +40,7 @@ inline std::string ReadWholeFile(const std::string& filename) {
 
     file.read(content.data(), content.size());
 
+    IO::PrintLog(LOG_LEVEL_INFO, "Read {} successfully", filename);
     return content;
 }
 
