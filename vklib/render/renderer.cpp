@@ -50,9 +50,7 @@ void Renderer::Render(const Rect& rect) {
     }
     device.resetFences(fences_[cur_Frame_]);
 
-    auto t = Mat4::CreateTranslate(rect.position);
-    auto s = Mat4::CreateScale(rect.size);
-    auto model = t * s;
+    auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
     BufferMVPData(model);
 
     auto& swapchain = ctx.swapchain;
@@ -74,7 +72,7 @@ void Renderer::Render(const Rect& rect) {
     cmd.begin(beginInfo);
     {
         vk::ClearValue clearValue;
-        clearValue.setColor(vk::ClearColorValue(std::array<float, 4>{0.1, 0.2, 0.3, 1}));
+        clearValue.setColor(vk::ClearColorValue(std::array<float, 4>{0.2, 0.3, 0.3, 1}));
         vk::RenderPassBeginInfo renderPassBeginInfo;
         renderPassBeginInfo
             .setRenderPass(ctx.renderProcess->renderPass)
