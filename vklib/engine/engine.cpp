@@ -7,12 +7,14 @@ void Init(std::vector<const char*>& extensions, Context::GetSurfaceCallback cb, 
     Context::Init(extensions, cb);
     auto& ctx = Context::GetInstance();
     ctx.InitSwapchain(windowWidth, windowHeight);
+    ctx.InitShaderModules();
     ctx.InitRenderProcess();
     ctx.InitGraphicsPipeline();
     ctx.swapchain->InitFramebuffers();
     ctx.InitCommandPool();
 
     renderer_ = std::make_unique<Renderer>();
+    renderer_->SetProjectionMatrix(windowWidth, 0, 0, windowHeight, -1, 1);
 }
 
 void Quit() {

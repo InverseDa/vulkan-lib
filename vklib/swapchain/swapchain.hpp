@@ -16,8 +16,8 @@ class Swapchain final {
     std::vector<Image> images;
     std::vector<vk::Framebuffer> framebuffers;
 
-    const auto& GetExtent() const { return surfaceInfo_.extent; }
-    const auto& GetFormat() const { return surfaceInfo_.format; }
+    [[nodiscard]] const auto& GetExtent() const { return surfaceInfo_.extent; }
+    [[nodiscard]] const auto& GetFormat() const { return surfaceInfo_.format; }
 
     Swapchain(vk::SurfaceKHR, int windowWidth, int windowHeight);
     ~Swapchain();

@@ -3,6 +3,8 @@
 
 #include "vulkan/vulkan.hpp"
 #include "vklib/buffer/buffer.hpp"
+#include "vklib/math/uniform.hpp"
+#include "vklib/math/mat4.hpp"
 
 namespace Vklib {
 class Renderer final {
@@ -10,38 +12,57 @@ class Renderer final {
     Renderer(int maxFightCount = 2);
     ~Renderer();
 
-    // WARNING: temporary draw triangle
-    // TODO: implement this function
-    void Render();
+    // TODO: temporary draw rect, implement this function
+    void Render(const Rect& rect);
+    void SetDrawColor(const Color& color);
+    void SetProjectionMatrix(int right, int left, int bottom, int top, int far, int near);
 
   private:
+    struct MVP {
+        Mat4 projection;
+        Mat4 view;
+        Mat4 model;
+    };
+
     int maxFightCount_;
     int cur_Frame_;
     std::vector<vk::Fence> fences_;
     std::vector<vk::Semaphore> imageAvaliableSems_;
     std::vector<vk::Semaphore> renderFinishSems_;
     std::vector<vk::CommandBuffer> cmdBufs_;
+    std::unique_ptr<Buffer> verticesBuffer_;
+    std::unique_ptr<Buffer> indicesBuffer_;
 
-    std::unique_ptr<Buffer> hostVertexBuffer_;
-    std::unique_ptr<Buffer> deviceVertexBuffer_;
-    std::vector<std::unique_ptr<Buffer>> hostUniformBuffer_;
-    std::vector<std::unique_ptr<Buffer>> deviceUniformBuffer_;
+    Mat4 projectionMat_;
+    Mat4 viewMat_;
 
-    vk::DescriptorPool descriptorPool_;
-    std::vector<vk::DescriptorSet> sets_;
+    std::vector<std::unique_ptr<Buffer>> uniformBuffers_;
+    std::vector<std::unique_ptr<Buffer>> colorBuffers_;
+    std::vector<std::unique_ptr<Buffer>> deviceUniformBuffers_;
+    std::vector<std::unique_ptr<Buffer>> deviceColorBuffers_;
+
+    vk::DescriptorPool descriptorPool1_;
+    vk::DescriptorPool descriptorPool2_;
+
+    std::pair<std::vector<vk::DescriptorSet>, std::vector<vk::DescriptorSet>> descriptorSets_;
+
+    void InitMats();
 
     void CreateFences();
     void CreateSemaphores();
     void CreateCmdBuffers();
-    void CreateVertexBuffer();
+    void CreateBuffers();
+    void CreateUniformBuffers(int flightCount);
     void BufferVertexData();
-    void CreateUniformBuffer();
-    void BufferUniformData();
-    void CreateDescriptorPool();
-    void AllocateSets();
-    void UpdateSets();
+    void BufferIndicesData();
+    void BufferMVPData(const Mat4&);
+    void BufferData();
+    void CreateDescriptorPool(int flightCount);
+    void AllocateDescriptorSets(int flightCount);
+    void UpdateDescriptorSets();
+    void TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
 
-    void CopyBuffer(vk::Buffer& src, vk::Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
+    std::uint32_t QueryBufferMemTypeIndex(std::uint32_t, vk::MemoryPropertyFlags);
 };
 } // namespace Vklib
 

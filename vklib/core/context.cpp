@@ -44,6 +44,7 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
 }
 
 Context::~Context() {
+    shader.reset();
     commandMgr.reset();
     renderProcess.reset();
     swapchain.reset();
@@ -126,13 +127,18 @@ void Context::InitSwapchain(int windowWidth, int windowHeight) {
 }
 
 void Context::InitGraphicsPipeline() {
-    auto vertexSource = ReadWholeFile("shaders/vert.spv");
-    auto fragSource = ReadWholeFile("shaders/frag.spv");
-    renderProcess->RecreateGraphicsPipeline(vertexSource, fragSource);
+    renderProcess->RecreateGraphicsPipeline(*shader);
 }
 
 void Context::InitCommandPool() {
     commandMgr = std::make_unique<CommandMgr>();
 }
+
+void Context::InitShaderModules() {
+    auto vertexSource = ReadWholeFile("shaders/frag.spv");
+    auto fragSource = ReadWholeFile("shaders/vert.spv");
+    shader = std::make_unique<Shader>(vertexSource, fragSource);
+}
+
 
 } // namespace Vklib

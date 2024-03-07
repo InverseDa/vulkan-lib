@@ -1,8 +1,9 @@
 #version 450
+#pragma shader_stage(fragment)
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform UBO {
+layout(set = 1, binding = 0) uniform UniformBuffer {
     vec3 color;
 } ubo;
 

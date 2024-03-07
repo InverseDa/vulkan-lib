@@ -12,6 +12,7 @@
 #include "vklib/render/render_process.hpp"
 #include "vklib/render/renderer.hpp"
 #include "vklib/cmd/command_mgr.hpp"
+#include "vklib/shader/shader.hpp"
 
 namespace Vklib {
 class Context final {
@@ -41,6 +42,7 @@ class Context final {
     std::unique_ptr<Swapchain> swapchain;
     std::unique_ptr<RenderProcess> renderProcess;
     std::unique_ptr<CommandMgr> commandMgr;
+    std::unique_ptr<Shader> shader;
 
   private:
     static Context* instance_;
@@ -55,6 +57,7 @@ class Context final {
     void InitSwapchain(int windowWidth, int windowHeight);
     void InitGraphicsPipeline();
     void InitCommandPool();
+    void InitShaderModules();
 
     vk::Instance CreateInstance(std::vector<const char*>& extensions);
     vk::PhysicalDevice PickupPhysicalDevice();

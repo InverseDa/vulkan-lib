@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "vklib/engine/engine.hpp"
+#include "vklib/math/vec2.hpp"
+#include "vklib/math/uniform.hpp"
 
 int main(int argc, char** argv) {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -35,7 +37,10 @@ int main(int argc, char** argv) {
                 shouldClose = true;
             }
         }
-        render->Render();
+        render->Render(Rect{
+                Vec2{100, 100},
+                Size{100, 100}
+        });
     }
 
     Vklib::Quit();

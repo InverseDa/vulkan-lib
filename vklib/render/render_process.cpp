@@ -1,12 +1,10 @@
 #include "render_process.hpp"
 #include "vklib/core/context.hpp"
-#include "vklib/mesh/vertex.hpp"
-#include "vklib/mesh/uniform.hpp"
+#include "vklib/math/vec2.hpp"
 
 namespace Vklib {
 
 RenderProcess::RenderProcess() {
-    setLayout = CreateSetLayout();
     layout = CreateLayout();
     renderPass = CreateRenderPass();
     graphicsPipeline = nullptr;
@@ -14,17 +12,16 @@ RenderProcess::RenderProcess() {
 
 RenderProcess::~RenderProcess() {
     auto& ctx = Context::GetInstance();
-    ctx.device.destroyDescriptorSetLayout(setLayout);
     ctx.device.destroyRenderPass(renderPass);
     ctx.device.destroyPipelineLayout(layout);
     ctx.device.destroyPipeline(graphicsPipeline);
 }
 
-void RenderProcess::RecreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource) {
+void RenderProcess::RecreateGraphicsPipeline(const Shader& shader) {
     if (graphicsPipeline) {
         Context::GetInstance().device.destroyPipeline(graphicsPipeline);
     }
-    graphicsPipeline = CreateGraphicsPipeline(vertexSource, fragSource);
+    graphicsPipeline = CreateGraphicsPipeline(shader);
 }
 
 void RenderProcess::RecreateRenderPass() {
@@ -36,42 +33,33 @@ void RenderProcess::RecreateRenderPass() {
 
 vk::PipelineLayout RenderProcess::CreateLayout() {
     vk::PipelineLayoutCreateInfo createInfo;
-    createInfo.setSetLayouts(setLayout);
+    createInfo
+        .setPushConstantRangeCount(0)
+        .setSetLayouts(Context::GetInstance().shader->GetDescriptorSetLayouts());
 
     return Context::GetInstance().device.createPipelineLayout(createInfo);
 }
 
-vk::Pipeline RenderProcess::CreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource) {
+vk::Pipeline RenderProcess::CreateGraphicsPipeline(const Shader& shader) {
     auto& ctx = Context::GetInstance();
 
     vk::GraphicsPipelineCreateInfo createInfo;
 
     // shader source
-    vk::ShaderModuleCreateInfo vertexModuleCreateInfo, fragModuleCreateInfo;
-    vertexModuleCreateInfo
-        .setCodeSize(vertexSource.size())
-        .setPCode((std::uint32_t*)vertexSource.data());
-    fragModuleCreateInfo
-        .setCodeSize(fragSource.size())
-        .setPCode((std::uint32_t*)fragSource.data());
-
-    auto vertexModule = ctx.device.createShaderModule(vertexModuleCreateInfo);
-    auto fragModule = ctx.device.createShaderModule(fragModuleCreateInfo);
-
     std::array<vk::PipelineShaderStageCreateInfo, 2> stageCreateInfos;
     stageCreateInfos[0]
-        .setModule(vertexModule)
+        .setModule(shader.GetVertexModule())
         .setPName("main")
         .setStage(vk::ShaderStageFlagBits::eVertex);
     stageCreateInfos[1]
-        .setModule(fragModule)
+        .setModule(shader.GetFragModule())
         .setPName("main")
         .setStage(vk::ShaderStageFlagBits::eFragment);
 
     // vertex input
     vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo;
-    auto attribute = Vertex::GetAttribute();
-    auto binding = Vertex::GetBinding();
+    auto attribute = Vec2::GetAttributeDescription();
+    auto binding = Vec2::GetBindingDescription();
     vertexInputStateCreateInfo
         .setVertexAttributeDescriptions(attribute)
         .setVertexBindingDescriptions(binding);
@@ -112,7 +100,10 @@ vk::Pipeline RenderProcess::CreateGraphicsPipeline(const std::vector<char>& vert
     vk::PipelineColorBlendAttachmentState blendAttachmentStateInfo;
     blendAttachmentStateInfo
         .setBlendEnable(false)
-        .setColorWriteMask(vk::ColorComponentFlagBits::eA | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eR);
+        .setColorWriteMask(vk::ColorComponentFlagBits::eA |
+                           vk::ColorComponentFlagBits::eB |
+                           vk::ColorComponentFlagBits::eG |
+                           vk::ColorComponentFlagBits::eR);
     vk::PipelineColorBlendStateCreateInfo blendStateCreateInfo;
     blendStateCreateInfo
         .setLogicOpEnable(false)
@@ -130,14 +121,10 @@ vk::Pipeline RenderProcess::CreateGraphicsPipeline(const std::vector<char>& vert
         .setPColorBlendState(&blendStateCreateInfo)
         .setRenderPass(renderPass);
 
-    auto result = Context::GetInstance().device.createGraphicsPipeline(nullptr, createInfo);
+    auto result = ctx.device.createGraphicsPipeline(nullptr, createInfo);
     if (result.result != vk::Result::eSuccess) {
         IO::ThrowError("Failed to create graphics graphicsPipeline");
     }
-
-    // clear shader module
-    ctx.device.destroyShaderModule(vertexModule);
-    ctx.device.destroyShaderModule(fragModule);
 
     return result.value;
 }
@@ -182,14 +169,6 @@ vk::RenderPass RenderProcess::CreateRenderPass() {
         .setSubpasses(subpassDescription);
 
     return ctx.device.createRenderPass(createInfo);
-}
-
-vk::DescriptorSetLayout RenderProcess::CreateSetLayout() {
-    vk::DescriptorSetLayoutCreateInfo createInfo;
-    auto binding = Uniform::GetBinding();
-    createInfo.setBindings(binding);
-
-    return Context::GetInstance().device.createDescriptorSetLayout(createInfo);
 }
 
 } // namespace Vklib

@@ -2,26 +2,25 @@
 #define VULKAN_LIB_RENDER_PROCESS_HPP
 
 #include "vulkan/vulkan.hpp"
+#include "vklib/shader/shader.hpp"
 
 namespace Vklib {
 class RenderProcess final {
   public:
     vk::Pipeline graphicsPipeline = nullptr;
-    vk::PipelineLayout layout = nullptr;
     vk::RenderPass renderPass = nullptr;
-    vk::DescriptorSetLayout setLayout = nullptr;
+    vk::PipelineLayout layout = nullptr;
 
     RenderProcess();
     ~RenderProcess();
 
-    void RecreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource);
+    void RecreateGraphicsPipeline(const Shader& shader);
     void RecreateRenderPass();
 
   private:
     vk::PipelineLayout CreateLayout();
-    vk::Pipeline CreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource);
+    vk::Pipeline CreateGraphicsPipeline(const Shader& shader);
     vk::RenderPass CreateRenderPass();
-    vk::DescriptorSetLayout CreateSetLayout();
 };
 } // namespace Vklib
 

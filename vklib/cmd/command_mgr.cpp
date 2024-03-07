@@ -41,7 +41,7 @@ vk::CommandBuffer CommandMgr::CreateACommandBuffer() {
     return CreateCommandBuffers(1)[0];
 }
 
-void CommandMgr::FreeCmd(vk::CommandBuffer buf) {
+void CommandMgr::FreeCmd(const vk::CommandBuffer& buf) {
     Context::GetInstance().device.freeCommandBuffers(pool_, buf);
 }
 

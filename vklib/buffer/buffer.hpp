@@ -8,21 +8,16 @@ class Buffer final {
   public:
     vk::Buffer buffer;
     vk::DeviceMemory memory;
+    void* map;
     size_t size;
+    size_t requireSize;
 
-    Buffer(size_t size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags property);
+    Buffer(vk::BufferUsageFlags usage, size_t size, vk::MemoryPropertyFlags memProperty);
     ~Buffer();
 
   private:
-    struct MemoryInfo final {
-        size_t size;
-        uint32_t index;
-    };
 
-    void CreateBuffer(size_t size, vk::BufferUsageFlags usage);
-    void AllocateMemory(MemoryInfo info);
-    void BindingMem2Buf();
-    MemoryInfo QueryMemoryInfo(vk::MemoryPropertyFlags property);
+    std::uint32_t QueryBufferMemTypeIndex(std::uint32_t requirementBit, vk::MemoryPropertyFlags);
 };
 } // namespace Vklib
 

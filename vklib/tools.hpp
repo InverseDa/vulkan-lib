@@ -9,20 +9,6 @@
 
 #include "log/log.hpp"
 
-template <typename T, typename U>
-void RemoveUnsupportedElems(std::vector<T>& elems, const std::vector<U>& supportedElems, std::function<bool(const T&, const U&)> eq) {
-    int i = 0;
-    while (i < elems.size()) {
-        if (std::find_if(supportedElems.begin(), supportedElems.end(), [&](const U& elem) {
-                return eq(elems[i], elem);
-            }) == supportedElems.end()) {
-            elems.erase(elems.begin() + i);
-        } else {
-            i++;
-        }
-    }
-}
-
 inline std::vector<char> ReadWholeFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
 

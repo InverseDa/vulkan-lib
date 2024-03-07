@@ -11,7 +11,7 @@ class CommandMgr final {
     vk::CommandBuffer CreateACommandBuffer();
     std::vector<vk::CommandBuffer> CreateCommandBuffers(std::uint32_t count);
     void ResetCmds();
-    void FreeCmd(vk::CommandBuffer);
+    void FreeCmd(const vk::CommandBuffer&);
 
   private:
     vk::CommandPool pool_;
