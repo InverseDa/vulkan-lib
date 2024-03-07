@@ -16,8 +16,6 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
     AllocateDescriptorSets(maxFlightCount);
     UpdateDescriptorSets();
     InitMats();
-
-    SetDrawColor(Color{0.1, 0.2, 0.3});
 }
 
 Renderer::~Renderer() {
@@ -52,8 +50,10 @@ void Renderer::Render(const Rect& rect) {
     }
     device.resetFences(fences_[cur_Frame_]);
 
-//    auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
-//    BufferMVPData(model);
+    auto t = Mat4::CreateTranslate(rect.position);
+    auto s = Mat4::CreateScale(rect.size);
+    auto model = t * s;
+    BufferMVPData(model);
 
     auto& swapchain = ctx.swapchain;
     auto resultValue = device.acquireNextImageKHR(swapchain->swapchain,
@@ -89,12 +89,12 @@ void Renderer::Render(const Rect& rect) {
             cmd.bindVertexBuffers(0, verticesBuffer_->buffer, offset);
             cmd.bindIndexBuffer(indicesBuffer_->buffer, 0, vk::IndexType::eUint32);
             cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                   ctx.renderProcess->layout,
+                                   Context::GetInstance().renderProcess->layout,
                                    0,
                                    descriptorSets_.first[cur_Frame_],
                                    {});
             cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                   ctx.renderProcess->layout,
+                                   Context::GetInstance().renderProcess->layout,
                                    1,
                                    descriptorSets_.second[cur_Frame_],
                                    {});
@@ -348,7 +348,7 @@ void Renderer::UpdateDescriptorSets() {
 }
 
 void Renderer::SetProjectionMatrix(int right, int left, int bottom, int top, int far, int near) {
-    projectionMat_ = Mat4::CreateOrtho(right, left, bottom, top, far, near);
+    projectionMat_ = Mat4::CreateOrtho(left, right, top, bottom, near, far);
 }
 
 } // namespace Vklib

@@ -29,17 +29,42 @@ int main(int argc, char** argv) {
         }
         return surface; }, 1024, 720);
 
-    auto render = Vklib::GetRenderer();
+    auto renderer = Vklib::GetRenderer();
 
+    float x = 100, y = 100;
+    renderer->SetDrawColor(Color{0, 1, 0});
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 shouldClose = true;
             }
+            if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_a) {
+                    x -= 10;
+                }
+                if (event.key.keysym.sym == SDLK_d) {
+                    x += 10;
+                }
+                if (event.key.keysym.sym == SDLK_w) {
+                    y -= 10;
+                }
+                if (event.key.keysym.sym == SDLK_s) {
+                    y += 10;
+                }
+                if (event.key.keysym.sym == SDLK_0) {
+                    renderer->SetDrawColor(Color{1, 0, 0});
+                }
+                if (event.key.keysym.sym == SDLK_1) {
+                    renderer->SetDrawColor(Color{0, 1, 0});
+                }
+                if (event.key.keysym.sym == SDLK_2) {
+                    renderer->SetDrawColor(Color{0, 0, 1});
+                }
+            }
         }
-        render->Render(Rect{
-                Vec2{100, 100},
-                Size{100, 100}
+        renderer->Render(Rect{
+                Vec2{x, y},
+                Size{200, 300}
         });
     }
 

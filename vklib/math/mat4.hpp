@@ -84,9 +84,9 @@ class Mat4 {
         Mat4 result;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                result.data_[i][j] = 0;
+                result[i][j] = 0;
                 for (int k = 0; k < 4; k++) {
-                    result.data_[i][j] += data_[i][k] * other.data_[k][j];
+                    result[i][j] += data_[i][k] * other.data_[k][j];
                 }
             }
         }
@@ -130,9 +130,9 @@ class Mat4 {
         mat[0][0] = 2.0 / (right - left);
         mat[1][1] = 2.0 / (top - bottom);
         mat[2][2] = 2.0 / (near - far);
-        mat[3][0] = (left + right) / (left - right);
-        mat[3][1] = (top + bottom) / (bottom - top);
-        mat[3][2] = (near + far) / (far - near);
+        mat[0][3] = (left + right) / (left - right);
+        mat[1][3] = (top + bottom) / (bottom - top);
+        mat[2][3] = (near + far) / (far - near);
         return mat;
     }
 
