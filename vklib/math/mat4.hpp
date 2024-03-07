@@ -37,14 +37,6 @@ class Mat4 {
         data_[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    Mat4(const std::initializer_list<float>& list) {
-        int i = 0;
-        for (auto it = list.begin(); it != list.end(); it++) {
-            data_[i / 4][i % 4] = *it;
-            i++;
-        }
-    }
-
     Mat4(const Mat4& other) {
         data_ = other.data_;
     }
@@ -103,7 +95,9 @@ class Mat4 {
     Vec4 operator*(const Vec4& vec) const {
         Vec4 result;
         for (int i = 0; i < 4; i++) {
-            result[i] = data_[i][0] * vec[0] + data_[i][1] * vec[1] + data_[i][2] * vec[2] + data_[i][3] * vec[3];
+            for(int j = 0; j < 4; j++) {
+                result[i] += data_[j][i] * vec[j];
+            }
         }
         return result;
     }
@@ -130,16 +124,16 @@ class Mat4 {
         mat[0][0] = 2.0 / (right - left);
         mat[1][1] = 2.0 / (top - bottom);
         mat[2][2] = 2.0 / (near - far);
-        mat[0][3] = (left + right) / (left - right);
-        mat[1][3] = (top + bottom) / (bottom - top);
-        mat[2][3] = (near + far) / (far - near);
-        return mat.Transpose();
+        mat[3][0] = (left + right) / (left - right);
+        mat[3][1] = (top + bottom) / (bottom - top);
+        mat[3][2] = (near + far) / (far - near);
+        return mat;
     }
 
     static Mat4 CreateTranslate(const Vec4& pos) {
         Mat4 mat;
         mat[3] = pos;
-        return mat.Transpose();
+        return mat;
     }
 
     static Mat4 CreateTranslate(const Vec2& pos) {
@@ -170,6 +164,7 @@ class Mat4 {
     }
 
   private:
+    // Column-major order
     std::array<Vec4, 4> data_;
 };
 
