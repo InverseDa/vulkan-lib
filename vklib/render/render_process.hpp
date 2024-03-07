@@ -9,6 +9,7 @@ class RenderProcess final {
     vk::Pipeline graphicsPipeline = nullptr;
     vk::PipelineLayout layout = nullptr;
     vk::RenderPass renderPass = nullptr;
+    vk::DescriptorSetLayout setLayout = nullptr;
 
     RenderProcess();
     ~RenderProcess();
@@ -20,6 +21,7 @@ class RenderProcess final {
     vk::PipelineLayout CreateLayout();
     vk::Pipeline CreateGraphicsPipeline(const std::vector<char>& vertexSource, const std::vector<char>& fragSource);
     vk::RenderPass CreateRenderPass();
+    vk::DescriptorSetLayout CreateSetLayout();
 };
 } // namespace Vklib
 

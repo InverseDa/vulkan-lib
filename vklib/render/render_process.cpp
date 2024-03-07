@@ -1,10 +1,12 @@
 #include "render_process.hpp"
 #include "vklib/core/context.hpp"
 #include "vklib/mesh/vertex.hpp"
+#include "vklib/mesh/uniform.hpp"
 
 namespace Vklib {
 
 RenderProcess::RenderProcess() {
+    setLayout = CreateSetLayout();
     layout = CreateLayout();
     renderPass = CreateRenderPass();
     graphicsPipeline = nullptr;
@@ -12,6 +14,7 @@ RenderProcess::RenderProcess() {
 
 RenderProcess::~RenderProcess() {
     auto& ctx = Context::GetInstance();
+    ctx.device.destroyDescriptorSetLayout(setLayout);
     ctx.device.destroyRenderPass(renderPass);
     ctx.device.destroyPipelineLayout(layout);
     ctx.device.destroyPipeline(graphicsPipeline);
@@ -33,9 +36,8 @@ void RenderProcess::RecreateRenderPass() {
 
 vk::PipelineLayout RenderProcess::CreateLayout() {
     vk::PipelineLayoutCreateInfo createInfo;
-    createInfo
-        .setPushConstantRangeCount(0)
-        .setSetLayoutCount(0);
+    createInfo.setSetLayouts(setLayout);
+
     return Context::GetInstance().device.createPipelineLayout(createInfo);
 }
 
@@ -180,6 +182,14 @@ vk::RenderPass RenderProcess::CreateRenderPass() {
         .setSubpasses(subpassDescription);
 
     return ctx.device.createRenderPass(createInfo);
+}
+
+vk::DescriptorSetLayout RenderProcess::CreateSetLayout() {
+    vk::DescriptorSetLayoutCreateInfo createInfo;
+    auto binding = Uniform::GetBinding();
+    createInfo.setBindings(binding);
+
+    return Context::GetInstance().device.createDescriptorSetLayout(createInfo);
 }
 
 } // namespace Vklib

@@ -9,7 +9,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: true
 AlwaysBreakBeforeMultilineStrings: false
 AlignOperands: true
-AlignAfterOpenBracket: BlockIndent
+AlignAfterOpenBracket: Align
 AlignConsecutiveBitFields: true
 AlignConsecutiveMacros: true
 BinPackArguments: false

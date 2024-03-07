@@ -24,12 +24,24 @@ class Renderer final {
 
     std::unique_ptr<Buffer> hostVertexBuffer_;
     std::unique_ptr<Buffer> deviceVertexBuffer_;
+    std::vector<std::unique_ptr<Buffer>> hostUniformBuffer_;
+    std::vector<std::unique_ptr<Buffer>> deviceUniformBuffer_;
+
+    vk::DescriptorPool descriptorPool_;
+    std::vector<vk::DescriptorSet> sets_;
 
     void CreateFences();
     void CreateSemaphores();
     void CreateCmdBuffers();
     void CreateVertexBuffer();
     void BufferVertexData();
+    void CreateUniformBuffer();
+    void BufferUniformData();
+    void CreateDescriptorPool();
+    void AllocateSets();
+    void UpdateSets();
+
+    void CopyBuffer(vk::Buffer& src, vk::Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
 };
 } // namespace Vklib
 
