@@ -84,9 +84,9 @@ class Mat4 {
         Mat4 result;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                result[i][j] = 0;
+                result[j][i] = 0;
                 for (int k = 0; k < 4; k++) {
-                    result[i][j] += data_[i][k] * other.data_[k][j];
+                    result[j][i] += data_[k][i] * other.data_[j][k];
                 }
             }
         }
@@ -133,7 +133,7 @@ class Mat4 {
         mat[0][3] = (left + right) / (left - right);
         mat[1][3] = (top + bottom) / (bottom - top);
         mat[2][3] = (near + far) / (far - near);
-        return mat;
+        return mat.Transpose();
     }
 
     static Mat4 CreateTranslate(const Vec4& pos) {
@@ -146,7 +146,7 @@ class Mat4 {
         Mat4 mat;
         mat[3][0] = pos.x;
         mat[3][1] = pos.y;
-        return mat.Transpose();
+        return mat;
     }
 
     static Mat4 CreateScale(const Vec4& scale) {
