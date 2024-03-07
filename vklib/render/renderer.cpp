@@ -240,9 +240,9 @@ void Renderer::BufferData() {
 
 void Renderer::BufferVertexData() {
     Vec2 vertices[] = {
-        {0.5, 0.5},
-        {0.5, -0.5},
         {-0.5, -0.5},
+        {0.5, -0.5},
+        {0.5, 0.5},
         {-0.5, 0.5},
     };
     memcpy(verticesBuffer_->map, vertices, sizeof(vertices));
