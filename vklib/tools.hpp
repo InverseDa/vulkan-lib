@@ -9,6 +9,11 @@
 
 #include "log/log.hpp"
 
+// TODO: Move this to a better place
+#ifdef PROJECT_SOURCE_DIR
+[[maybe_unused]] static const std::string PSD = std::string(const_cast<char*>(PROJECT_SOURCE_DIR));
+#endif
+
 inline std::vector<char> ReadWholeFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
 

@@ -11,7 +11,10 @@ include(cmake/FindSDL2.cmake)
 include(cmake/FindGLFW.cmake)
 include(cmake/Copydll.cmake)
 # 预备阶段 找到glslc程序，用于编译shader
-include(cmake/FindGLSLC.cmake)
+include(cmake/CompileShaders.cmake)
+
+# 添加宏
+add_compile_definitions(PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}/")
 
 # 遍历vklib/的每个文件夹里的每个cpp，并加入到编译列表中
 # 比如vklib/app/*.cpp
