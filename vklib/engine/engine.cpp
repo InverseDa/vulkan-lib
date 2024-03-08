@@ -14,7 +14,7 @@ void Init(std::vector<const char*>& extensions, Context::GetSurfaceCallback cb, 
     ctx.InitCommandPool();
 
     renderer_ = std::make_unique<Renderer>();
-    renderer_->SetProjectionMatrix(windowWidth, 0, 0, windowHeight, -1, 1);
+    renderer_->SetProjectionMatrix(0, windowWidth, windowHeight, 0, 1, -1);
 }
 
 void Quit() {

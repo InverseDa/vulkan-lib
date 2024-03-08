@@ -15,7 +15,7 @@ class Renderer final {
     // TODO: temporary draw rect, implement this function
     void Render(const Rect& rect);
     void SetDrawColor(const Color& color);
-    void SetProjectionMatrix(int right, int left, int bottom, int top, int far, int near);
+    void SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far);
 
   private:
     struct MVP {

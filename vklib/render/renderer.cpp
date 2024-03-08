@@ -345,7 +345,7 @@ void Renderer::UpdateDescriptorSets() {
     }
 }
 
-void Renderer::SetProjectionMatrix(int right, int left, int bottom, int top, int far, int near) {
+void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far) {
     projectionMat_ = Mat4::CreateOrtho(left, right, top, bottom, near, far);
 }
 
