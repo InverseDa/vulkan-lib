@@ -29,20 +29,29 @@ Shader::~Shader() {
 
 void Shader::InitDescriptorSetLayouts() {
     vk::DescriptorSetLayoutCreateInfo createInfo;
-    vk::DescriptorSetLayoutBinding binding;
-    binding.setBinding(0)
+    std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
+    bindings[0]
+        .setBinding(0)
         .setDescriptorCount(1)
         .setDescriptorType(vk::DescriptorType::eUniformBuffer)
         .setStageFlags(vk::ShaderStageFlagBits::eVertex);
-    createInfo.setBindings(binding);
-    layouts_.push_back(Context::GetInstance().device.createDescriptorSetLayout(createInfo));
-
-    binding.setBinding(0)
+    bindings[1]
+        .setBinding(1)
         .setDescriptorCount(1)
         .setDescriptorType(vk::DescriptorType::eUniformBuffer)
         .setStageFlags(vk::ShaderStageFlagBits::eFragment);
-    createInfo.setBindings(binding);
+    createInfo.setBindings(bindings);
+
     layouts_.push_back(Context::GetInstance().device.createDescriptorSetLayout(createInfo));
+}
+
+vk::PushConstantRange Shader::GetPushConstantRange() const {
+    vk::PushConstantRange range;
+    range
+        .setOffset(0)
+        .setSize(sizeof(Mat4))
+        .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+    return range;
 }
 
 } // namespace Vklib

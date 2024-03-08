@@ -20,8 +20,7 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
 
 Renderer::~Renderer() {
     auto& device = Context::GetInstance().device;
-    device.destroyDescriptorPool(descriptorPool1_);
-    device.destroyDescriptorPool(descriptorPool2_);
+    device.destroyDescriptorPool(descriptorPool_);
     verticesBuffer_.reset();
     indicesBuffer_.reset();
     uniformBuffers_.clear();
@@ -49,9 +48,6 @@ void Renderer::Render(const Rect& rect) {
         IO::ThrowError("Wait for fence failed!");
     }
     device.resetFences(fences_[cur_Frame_]);
-
-    auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
-    BufferMVPData(model);
 
     auto& swapchain = ctx.swapchain;
     auto resultValue = device.acquireNextImageKHR(swapchain->swapchain,
@@ -86,16 +82,14 @@ void Renderer::Render(const Rect& rect) {
             vk::DeviceSize offset = 0;
             cmd.bindVertexBuffers(0, verticesBuffer_->buffer, offset);
             cmd.bindIndexBuffer(indicesBuffer_->buffer, 0, vk::IndexType::eUint32);
+            auto& layout = Context::GetInstance().renderProcess->layout;
             cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                    Context::GetInstance().renderProcess->layout,
                                    0,
-                                   descriptorSets_.first[cur_Frame_],
+                                   descriptorSets_[cur_Frame_],
                                    {});
-            cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                   Context::GetInstance().renderProcess->layout,
-                                   1,
-                                   descriptorSets_.second[cur_Frame_],
-                                   {});
+            auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
+            cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), &model);
 
             cmd.drawIndexed(6, 1, 0, 0, 0);
         }
@@ -167,8 +161,7 @@ void Renderer::CreateBuffers() {
 
 void Renderer::CreateUniformBuffers(int flightCount) {
     uniformBuffers_.resize(flightCount);
-    // including MVP and color, 4 * 4 * 3
-    size_t size = sizeof(float) * 4 * 4 * 3;
+    size_t size = sizeof(Mat4) * 2;
     for (auto& buffer : uniformBuffers_) {
         buffer.reset(new Buffer(vk::BufferUsageFlagBits::eTransferSrc,
                                 size,
@@ -183,7 +176,7 @@ void Renderer::CreateUniformBuffers(int flightCount) {
     }
 
     colorBuffers_.resize(flightCount);
-    size = sizeof(float) * 3;
+    size = sizeof(Color);
     for (auto& buffer : colorBuffers_) {
         buffer.reset(new Buffer(vk::BufferUsageFlagBits::eTransferSrc,
                                 size,
@@ -260,14 +253,15 @@ void Renderer::BufferIndicesData() {
     memcpy(indicesBuffer_->map, indices, sizeof(indices));
 }
 
-void Renderer::BufferMVPData(const Mat4& model) {
-    MVP mvp;
-    mvp.projection = projectionMat_;
-    mvp.view = viewMat_;
-    mvp.model = model;
+void Renderer::BufferMVPData() {
+    struct Matrices {
+        Mat4 view;
+        Mat4 projection;
+    } matrices;
     for (int i = 0; i < uniformBuffers_.size(); i++) {
         auto& buffer = uniformBuffers_[i];
-        memcpy(buffer->map, (void*)&mvp, sizeof(mvp));
+        memcpy(buffer->map, (void*)&projectionMat_, sizeof(Mat4));
+        memcpy(((float*)buffer->map + 4 * 4), (void*)&viewMat_, sizeof(Mat4));
         TransBuffer2Device(*buffer, *deviceUniformBuffers_[i], buffer->size, 0, 0);
     }
 }
@@ -289,38 +283,35 @@ void Renderer::CreateDescriptorPool(int flightCount) {
     std::vector<vk::DescriptorPoolSize> sizes(2, poolSize);
     createInfo.setMaxSets(flightCount)
         .setPoolSizes(sizes);
-    descriptorPool1_ = Context::GetInstance().device.createDescriptorPool(createInfo);
-    descriptorPool2_ = Context::GetInstance().device.createDescriptorPool(createInfo);
+    descriptorPool_ = Context::GetInstance().device.createDescriptorPool(createInfo);
 }
 
 void Renderer::AllocateDescriptorSets(int flightCount) {
+    descriptorSets_ = AllocateDescriptorSet(flightCount);
+}
+
+std::vector<vk::DescriptorSet> Renderer::AllocateDescriptorSet(int flightCount) {
     std::vector<vk::DescriptorSetLayout> layouts(flightCount, Context::GetInstance().shader->GetDescriptorSetLayouts()[0]);
     vk::DescriptorSetAllocateInfo allocateInfo;
     allocateInfo
-        .setDescriptorPool(descriptorPool1_)
+        .setDescriptorPool(descriptorPool_)
         .setSetLayouts(layouts);
-    descriptorSets_.first = Context::GetInstance().device.allocateDescriptorSets(allocateInfo);
-
-    layouts = std::vector(flightCount, Context::GetInstance().shader->GetDescriptorSetLayouts()[1]);
-    allocateInfo
-        .setDescriptorPool(descriptorPool2_)
-        .setSetLayouts(layouts);
-    descriptorSets_.second = Context::GetInstance().device.allocateDescriptorSets(allocateInfo);
+    return Context::GetInstance().device.allocateDescriptorSets(allocateInfo);
 }
 
 void Renderer::UpdateDescriptorSets() {
-    for (int i = 0; i < descriptorSets_.first.size(); i++) {
+    for (int i = 0; i < descriptorSets_.size(); i++) {
         // bind MVP buffer
         vk::DescriptorBufferInfo bufferInfo1;
         bufferInfo1
             .setBuffer(deviceUniformBuffers_[i]->buffer)
             .setOffset(0)
-            .setRange(sizeof(float) * 4 * 4 * 3);
+            .setRange(sizeof(Mat4) * 2);
 
         std::vector<vk::WriteDescriptorSet> writerInfos(2);
         writerInfos[0]
             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-            .setDstSet(descriptorSets_.first[i])
+            .setDstSet(descriptorSets_[i])
             .setDstBinding(0)
             .setDstArrayElement(0)
             .setDescriptorCount(1)
@@ -331,12 +322,12 @@ void Renderer::UpdateDescriptorSets() {
         bufferInfo2
             .setBuffer(deviceColorBuffers_[i]->buffer)
             .setOffset(0)
-            .setRange(sizeof(float) * 3);
+            .setRange(sizeof(Color));
 
         writerInfos[1]
             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-            .setDstSet(descriptorSets_.second[i])
-            .setDstBinding(0)
+            .setDstSet(descriptorSets_[i])
+            .setDstBinding(1)
             .setDstArrayElement(0)
             .setDescriptorCount(1)
             .setBufferInfo(bufferInfo2);
@@ -347,6 +338,8 @@ void Renderer::UpdateDescriptorSets() {
 
 void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far) {
     projectionMat_ = Mat4::CreateOrtho(left, right, top, bottom, near, far);
+    BufferMVPData();
 }
+
 
 } // namespace Vklib

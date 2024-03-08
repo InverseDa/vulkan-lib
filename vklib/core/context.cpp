@@ -28,6 +28,7 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
     if (!phyDevice) {
         IO::ThrowError("Failed to pickup physical device");
     }
+    IO::PrintLog(LOG_LEVEL_INFO, "Physical device name: {}", phyDevice.getProperties().deviceName.data());
 
     surface_ = getSurfaceCb_(instance);
     if (!surface_) {
@@ -119,7 +120,7 @@ void Context::QueryQueueInfo(vk::SurfaceKHR surface) {
 }
 
 void Context::InitRenderProcess() {
-     renderProcess = std::make_unique<RenderProcess>();
+    renderProcess = std::make_unique<RenderProcess>();
 }
 
 void Context::InitSwapchain(int windowWidth, int windowHeight) {
@@ -139,6 +140,5 @@ void Context::InitShaderModules() {
     auto fragSource = ReadWholeFile("shaders/vert.spv");
     shader = std::make_unique<Shader>(vertexSource, fragSource);
 }
-
 
 } // namespace Vklib
