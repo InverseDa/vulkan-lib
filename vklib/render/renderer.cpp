@@ -347,7 +347,7 @@ void Renderer::CreateSampler() {
 }
 
 void Renderer::CreateTexture() {
-    texture.reset(new Texture(GetTestsPath("assets/texture.jpg")));
+    texture.reset(new Texture(GetTestsPath("assets/role.png")));
 }
 
 void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far) {
