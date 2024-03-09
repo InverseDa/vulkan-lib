@@ -60,6 +60,9 @@ int main(int argc, char** argv) {
         renderer->EndRender();
     }
 
+    Vklib::DestroyTexture(texture1);
+    Vklib::DestroyTexture(texture2);
+
     Vklib::Quit();
 
     SDL_DestroyWindow(window);
