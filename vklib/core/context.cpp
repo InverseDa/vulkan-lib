@@ -137,8 +137,8 @@ void Context::InitCommandPool() {
 }
 
 void Context::InitShaderModules() {
-    auto vertexSource = ReadWholeFile(PSD + "tests/shaders/frag.spv");
-    auto fragSource = ReadWholeFile(PSD + "tests/shaders/vert.spv");
+    auto vertexSource = ReadWholeFile(GetTestsPath("shaders/frag.spv"));
+    auto fragSource = ReadWholeFile(GetTestsPath("shaders/vert.spv"));
     shader = std::make_unique<Shader>(vertexSource, fragSource);
 }
 

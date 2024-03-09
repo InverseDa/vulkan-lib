@@ -32,4 +32,14 @@ inline std::vector<char> ReadWholeFile(const std::string& filename) {
     return content;
 }
 
+inline std::string GetProjectSourcePath(const std::string& filename) {
+    std::string path = PSD + filename;
+    return path;
+}
+
+inline std::string GetTestsPath(const std::string& filename) {
+    std::string path = PSD + "tests/" + filename;
+    return path;
+}
+
 #endif // VULKAN_LIB_TOOLS_HPP

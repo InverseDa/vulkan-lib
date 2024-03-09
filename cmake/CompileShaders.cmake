@@ -1,0 +1,6 @@
+find_program(GLSLC glslc REQUIRED)
+message(STATUS "Found glscl: ${GLSLC}")
+execute_process(COMMAND ${GLSLC} --version OUTPUT_VARIABLE GLSCL_VERSION)
+execute_process(COMMAND ${GLSLC} ${PROJECT_SOURCE_DIR}/tests/shaders/vert.glsl -o ${PROJECT_SOURCE_DIR}/tests/shaders/vert.spv)
+execute_process(COMMAND ${GLSLC} ${PROJECT_SOURCE_DIR}/tests/shaders/frag.glsl -o ${PROJECT_SOURCE_DIR}/tests/shaders/frag.spv)
+message(STATUS "Shaders compiled")
