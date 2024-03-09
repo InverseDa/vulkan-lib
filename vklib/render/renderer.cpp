@@ -13,10 +13,7 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
     CreateBuffers();
     CreateUniformBuffers(maxFlightCount);
     BufferData();
-    CreateTexture();
-    CreateSampler();
-    CreateDescriptorPool(maxFlightCount);
-    AllocateDescriptorSets(maxFlightCount);
+    descriptorSets_ = DescriptorSetMgr::GetInstance().AllocateBufferSets(maxFlightCount);
     UpdateDescriptorSets();
     InitMats();
 }
@@ -24,8 +21,6 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
 Renderer::~Renderer() {
     auto& device = Context::GetInstance().device;
     device.destroySampler(sampler);
-    texture.reset();
-    device.destroyDescriptorPool(descriptorPool_);
     verticesBuffer_.reset();
     indicesBuffer_.reset();
     uniformBuffers_.clear();
@@ -46,7 +41,26 @@ void Renderer::InitMats() {
     projectionMat_ = Mat4::CreateIdentity();
 }
 
-void Renderer::Render(const Rect& rect) {
+void Renderer::Draw(const Rect& rect, Texture& texture) {
+    auto& ctx = Context::GetInstance();
+    auto& device = ctx.device;
+    auto& cmd = cmdBufs_[cur_Frame_];
+
+    vk::DeviceSize offset = 0;
+    cmd.bindVertexBuffers(0, verticesBuffer_->buffer, offset);
+    cmd.bindIndexBuffer(indicesBuffer_->buffer, 0, vk::IndexType::eUint32);
+    auto& layout = Context::GetInstance().renderProcess->layout;
+    cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                           layout,
+                           0,
+                           { descriptorSets_[cur_Frame_].set, texture.set.set},
+                           {});
+    auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), &model);
+    cmd.drawIndexed(6, 1, 0, 0, 0);
+}
+
+void Renderer::StartRender() {
     auto& ctx = Context::GetInstance();
     auto& device = ctx.device;
     if (device.waitForFences(fences_[cur_Frame_], true, std::numeric_limits<std::uint64_t>::max()) != vk::Result::eSuccess) {
@@ -62,7 +76,7 @@ void Renderer::Render(const Rect& rect) {
     if (resultValue.result != vk::Result::eSuccess) {
         IO::ThrowError("Wait for image in swapchain failed!");
     }
-    auto imageIndex = resultValue.value;
+    imageIndex_ = resultValue.value;
 
     auto& cmdMgr = ctx.commandMgr;
     auto& cmd = cmdBufs_[cur_Frame_];
@@ -71,37 +85,29 @@ void Renderer::Render(const Rect& rect) {
     vk::CommandBufferBeginInfo beginInfo;
     beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     cmd.begin(beginInfo);
-    {
-        vk::ClearValue clearValue;
-        clearValue.setColor(vk::ClearColorValue(std::array<float, 4>{0.2, 0.3, 0.3, 1}));
-        vk::RenderPassBeginInfo renderPassBeginInfo;
-        renderPassBeginInfo
-            .setRenderPass(ctx.renderProcess->renderPass)
-            .setFramebuffer(swapchain->framebuffers[imageIndex])
-            .setRenderArea(vk::Rect2D({}, swapchain->GetExtent()))
-            .setClearValues(clearValue);
 
-        cmd.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-        {
-            cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, ctx.renderProcess->graphicsPipeline);
-            vk::DeviceSize offset = 0;
-            cmd.bindVertexBuffers(0, verticesBuffer_->buffer, offset);
-            cmd.bindIndexBuffer(indicesBuffer_->buffer, 0, vk::IndexType::eUint32);
-            auto& layout = Context::GetInstance().renderProcess->layout;
-            cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                   Context::GetInstance().renderProcess->layout,
-                                   0,
-                                   descriptorSets_[cur_Frame_],
-                                   {});
-            auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
-            cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), &model);
+    vk::ClearValue clearValue;
+    clearValue.setColor(vk::ClearColorValue(std::array<float, 4>{0.2, 0.3, 0.3, 1}));
+    vk::RenderPassBeginInfo renderPassBeginInfo;
+    renderPassBeginInfo
+        .setRenderPass(ctx.renderProcess->renderPass)
+        .setFramebuffer(swapchain->framebuffers[imageIndex_])
+        .setRenderArea(vk::Rect2D({}, swapchain->GetExtent()))
+        .setClearValues(clearValue);
 
-            cmd.drawIndexed(6, 1, 0, 0, 0);
-        }
-        cmd.endRenderPass();
-    }
+    cmd.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+
+    cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, ctx.renderProcess->graphicsPipeline);
+
+}
+
+void Renderer::EndRender() {
+    auto& ctx = Context::GetInstance();
+    auto& swapchain = ctx.swapchain;
+    auto& cmd = cmdBufs_[cur_Frame_];
+
+    cmd.endRenderPass();
     cmd.end();
-
     vk::SubmitInfo submit;
     vk::PipelineStageFlags flags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     submit
@@ -113,7 +119,7 @@ void Renderer::Render(const Rect& rect) {
 
     vk::PresentInfoKHR presentInfo;
     presentInfo
-        .setImageIndices(imageIndex)
+        .setImageIndices(imageIndex_)
         .setSwapchains(swapchain->swapchain)
         .setWaitSemaphores(renderFinishSems_[cur_Frame_]);
     if (ctx.presentQueue.presentKHR(presentInfo) != vk::Result::eSuccess) {
@@ -223,8 +229,12 @@ void Renderer::BufferVertexData() {
 
 void Renderer::BufferIndicesData() {
     std::uint32_t indices[] = {
-        0,1,3,
-        1,2,3,
+        0,
+        1,
+        3,
+        1,
+        2,
+        3,
     };
     memcpy(indicesBuffer_->map, indices, sizeof(indices));
 }
@@ -250,35 +260,6 @@ void Renderer::SetDrawColor(const Color& color) {
     }
 }
 
-void Renderer::CreateDescriptorPool(int flightCount) {
-    vk::DescriptorPoolCreateInfo createInfo;
-    std::vector<vk::DescriptorPoolSize> sizes(2);
-    sizes[0]
-        .setType(vk::DescriptorType::eUniformBuffer)
-        .setDescriptorCount(flightCount * 2);
-    sizes[1]
-        .setType(vk::DescriptorType::eCombinedImageSampler)
-        .setDescriptorCount(flightCount);
-
-    createInfo
-        .setMaxSets(flightCount)
-        .setPoolSizes(sizes);
-    descriptorPool_ = Context::GetInstance().device.createDescriptorPool(createInfo);
-}
-
-void Renderer::AllocateDescriptorSets(int flightCount) {
-    descriptorSets_ = AllocateDescriptorSet(flightCount);
-}
-
-std::vector<vk::DescriptorSet> Renderer::AllocateDescriptorSet(int flightCount) {
-    std::vector<vk::DescriptorSetLayout> layouts(flightCount, Context::GetInstance().shader->GetDescriptorSetLayouts()[0]);
-    vk::DescriptorSetAllocateInfo allocateInfo;
-    allocateInfo
-        .setDescriptorPool(descriptorPool_)
-        .setSetLayouts(layouts);
-    return Context::GetInstance().device.allocateDescriptorSets(allocateInfo);
-}
-
 void Renderer::UpdateDescriptorSets() {
     for (int i = 0; i < descriptorSets_.size(); i++) {
         // bind MVP buffer
@@ -288,10 +269,10 @@ void Renderer::UpdateDescriptorSets() {
             .setOffset(0)
             .setRange(sizeof(Mat4) * 2);
 
-        std::vector<vk::WriteDescriptorSet> writerInfos(3);
+        std::vector<vk::WriteDescriptorSet> writerInfos(2);
         writerInfos[0]
             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-            .setDstSet(descriptorSets_[i])
+            .setDstSet(descriptorSets_[i].set)
             .setDstBinding(0)
             .setDstArrayElement(0)
             .setDescriptorCount(1)
@@ -306,48 +287,14 @@ void Renderer::UpdateDescriptorSets() {
 
         writerInfos[1]
             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-            .setDstSet(descriptorSets_[i])
+            .setDstSet(descriptorSets_[i].set)
             .setDstBinding(1)
             .setDstArrayElement(0)
             .setDescriptorCount(1)
             .setBufferInfo(bufferInfo2);
 
-        // bind texture
-        vk::DescriptorImageInfo imageInfo;
-        imageInfo
-            .setSampler(sampler)
-            .setImageView(texture->view)
-            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-
-        writerInfos[2]
-            .setImageInfo(imageInfo)
-            .setDstBinding(2)
-            .setDstArrayElement(0)
-            .setDescriptorCount(1)
-            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-            .setDstSet(descriptorSets_[i]);
-
         Context::GetInstance().device.updateDescriptorSets(writerInfos, {});
     }
-}
-
-void Renderer::CreateSampler() {
-    vk::SamplerCreateInfo createInfo;
-    createInfo.setMagFilter(vk::Filter::eLinear)
-        .setMinFilter(vk::Filter::eLinear)
-        .setAddressModeU(vk::SamplerAddressMode::eRepeat)
-        .setAddressModeV(vk::SamplerAddressMode::eRepeat)
-        .setAddressModeW(vk::SamplerAddressMode::eRepeat)
-        .setAnisotropyEnable(false)
-        .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
-        .setUnnormalizedCoordinates(false)
-        .setCompareEnable(false)
-        .setMipmapMode(vk::SamplerMipmapMode::eLinear);
-    sampler = Context::GetInstance().device.createSampler(createInfo);
-}
-
-void Renderer::CreateTexture() {
-    texture.reset(new Texture(GetTestsPath("assets/role.png")));
 }
 
 void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far) {

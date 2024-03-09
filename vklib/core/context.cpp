@@ -47,6 +47,7 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
 
 Context::~Context() {
     shader.reset();
+    device.destroySampler(sampler);
     commandMgr.reset();
     renderProcess.reset();
     swapchain.reset();
@@ -140,6 +141,22 @@ void Context::InitShaderModules() {
     auto vertexSource = ReadWholeFile(GetTestsPath("shaders/frag.spv"));
     auto fragSource = ReadWholeFile(GetTestsPath("shaders/vert.spv"));
     shader = std::make_unique<Shader>(vertexSource, fragSource);
+}
+
+void Context::InitSampler() {
+    vk::SamplerCreateInfo createInfo;
+    createInfo
+        .setMagFilter(vk::Filter::eLinear)
+        .setMinFilter(vk::Filter::eLinear)
+        .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+        .setAnisotropyEnable(false)
+        .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+        .setUnnormalizedCoordinates(false)
+        .setCompareEnable(false)
+        .setMipmapMode(vk::SamplerMipmapMode::eLinear);
+    sampler = Context::GetInstance().device.createSampler(createInfo);
 }
 
 } // namespace Vklib

@@ -11,17 +11,21 @@
 namespace Vklib {
 class Renderer final {
   public:
-    Renderer(int maxFightCount = 2);
+    Renderer(int maxFightCount);
     ~Renderer();
 
     // TODO: temporary draw rect, implement this function
-    void Render(const Rect& rect);
+    void Draw(const Rect&, Texture&);
     void SetDrawColor(const Color& color);
     void SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far);
+
+    void StartRender();
+    void EndRender();
 
   private:
     int maxFightCount_;
     int cur_Frame_;
+    uint32_t imageIndex_;
     std::vector<vk::Fence> fences_;
     std::vector<vk::Semaphore> imageAvaliableSems_;
     std::vector<vk::Semaphore> renderFinishSems_;
@@ -37,11 +41,8 @@ class Renderer final {
     std::vector<std::unique_ptr<Buffer>> deviceUniformBuffers_;
     std::vector<std::unique_ptr<Buffer>> deviceColorBuffers_;
 
-    vk::DescriptorPool descriptorPool_;
+    std::vector<DescriptorSetMgr::SetInfo> descriptorSets_;
 
-    std::vector<vk::DescriptorSet> descriptorSets_;
-
-    std::unique_ptr<Texture> texture;
     vk::Sampler sampler;
 
     void InitMats();
@@ -55,13 +56,8 @@ class Renderer final {
     void BufferIndicesData();
     void BufferMVPData();
     void BufferData();
-    void CreateDescriptorPool(int flightCount);
-    std::vector<vk::DescriptorSet> AllocateDescriptorSet(int flightCount);
-    void AllocateDescriptorSets(int flightCount);
     void UpdateDescriptorSets();
     void TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
-    void CreateSampler();
-    void CreateTexture();
 };
 
 std::uint32_t QueryBufferMemTypeIndex(std::uint32_t, vk::MemoryPropertyFlags);

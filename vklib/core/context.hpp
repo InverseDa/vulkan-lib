@@ -43,6 +43,7 @@ class Context final {
     std::unique_ptr<RenderProcess> renderProcess;
     std::unique_ptr<CommandMgr> commandMgr;
     std::unique_ptr<Shader> shader;
+    vk::Sampler sampler;
 
   private:
     static Context* instance_;
@@ -58,6 +59,7 @@ class Context final {
     void InitGraphicsPipeline();
     void InitCommandPool();
     void InitShaderModules();
+    void InitSampler();
 
     vk::Instance CreateInstance(std::vector<const char*>& extensions);
     vk::PhysicalDevice PickupPhysicalDevice();

@@ -29,7 +29,7 @@ Shader::~Shader() {
 
 void Shader::InitDescriptorSetLayouts() {
     vk::DescriptorSetLayoutCreateInfo createInfo;
-    std::vector<vk::DescriptorSetLayoutBinding> bindings(3);
+    std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
     bindings[0]
         .setBinding(0)
         .setDescriptorCount(1)
@@ -40,14 +40,16 @@ void Shader::InitDescriptorSetLayouts() {
         .setDescriptorCount(1)
         .setDescriptorType(vk::DescriptorType::eUniformBuffer)
         .setStageFlags(vk::ShaderStageFlagBits::eFragment);
-    bindings[2]
-        .setBinding(2)
+    createInfo.setBindings(bindings);
+    layouts_.push_back(Context::GetInstance().device.createDescriptorSetLayout(createInfo));
+
+    bindings.resize(1);
+    bindings[0]
+        .setBinding(0)
         .setDescriptorCount(1)
         .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
         .setStageFlags(vk::ShaderStageFlagBits::eFragment);
-
     createInfo.setBindings(bindings);
-
     layouts_.push_back(Context::GetInstance().device.createDescriptorSetLayout(createInfo));
 }
 

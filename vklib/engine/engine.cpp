@@ -12,15 +12,28 @@ void Init(std::vector<const char*>& extensions, Context::GetSurfaceCallback cb, 
     ctx.InitGraphicsPipeline();
     ctx.swapchain->InitFramebuffers();
     ctx.InitCommandPool();
+    ctx.InitSampler();
 
-    renderer_ = std::make_unique<Renderer>();
+    int maxFlightCount = 2;
+    DescriptorSetMgr::Init(maxFlightCount);
+    renderer_ = std::make_unique<Renderer>(maxFlightCount);
     renderer_->SetProjectionMatrix(0, windowWidth, windowHeight, 0, 1, -1);
 }
 
 void Quit() {
     Context::GetInstance().device.waitIdle();
     renderer_.reset();
+    TextureMgr::GetInstance().Clear();
+    DescriptorSetMgr::Quit();
     Context::Quit();
+}
+
+Texture* LoadTexture(const std::string& filename) {
+    return TextureMgr::GetInstance().Load(filename);
+}
+
+void DestroyTexture(Texture* tex) {
+    TextureMgr::GetInstance().Destroy(tex);
 }
 
 Renderer* GetRenderer() {

@@ -4,8 +4,6 @@
 #include <vector>
 
 #include "vklib/engine/engine.hpp"
-#include "vklib/math/vec2.hpp"
-#include "vklib/math/uniform.hpp"
 
 int main(int argc, char** argv) {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -34,6 +32,8 @@ int main(int argc, char** argv) {
 
     float x = 100, y = 100;
     renderer->SetDrawColor(Color{1, 1, 1});
+    Vklib::Texture* texture1 = Vklib::LoadTexture(GetTestsPath("assets/texture.jpg"));
+    Vklib::Texture* texture2 = Vklib::LoadTexture(GetTestsPath("assets/role.png"));
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
@@ -52,20 +52,12 @@ int main(int argc, char** argv) {
                 if (event.key.keysym.sym == SDLK_s) {
                     y += 10;
                 }
-//                if (event.key.keysym.sym == SDLK_0) {
-//                    renderer->SetDrawColor(Color{1, 0, 0});
-//                }
-//                if (event.key.keysym.sym == SDLK_1) {
-//                    renderer->SetDrawColor(Color{0, 1, 0});
-//                }
-//                if (event.key.keysym.sym == SDLK_2) {
-//                    renderer->SetDrawColor(Color{0, 0, 1});
-//                }
             }
         }
-        renderer->Render(Rect{
-            Vec2{x, y},
-            Size{200, 300}});
+        renderer->StartRender();
+        renderer->Draw(Rect{{x, y}, Size{200, 300}}, *texture1);
+        renderer->Draw(Rect{{500, 100}, Size{200, 300}}, *texture2);
+        renderer->EndRender();
     }
 
     Vklib::Quit();
