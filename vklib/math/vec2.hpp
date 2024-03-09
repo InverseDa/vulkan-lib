@@ -14,8 +14,8 @@ struct Vec2 final {
         };
     };
 
-    static vk::VertexInputAttributeDescription GetAttributeDescription();
-    static vk::VertexInputBindingDescription GetBindingDescription();
+    static std::vector<vk::VertexInputAttributeDescription> GetAttributeDescription();
+    static std::vector<vk::VertexInputBindingDescription> GetBindingDescription();
 };
 
 #endif // VULKAN_LIB_VEC2_HPP

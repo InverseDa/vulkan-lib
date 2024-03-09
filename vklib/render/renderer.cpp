@@ -2,6 +2,7 @@
 #include "vklib/core/context.hpp"
 #include "vklib/math/vec2.hpp"
 #include "vklib/math/uniform.hpp"
+#include "vklib/mesh/vertex.hpp"
 
 namespace Vklib {
 
@@ -12,6 +13,8 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
     CreateBuffers();
     CreateUniformBuffers(maxFlightCount);
     BufferData();
+    CreateTexture();
+    CreateSampler();
     CreateDescriptorPool(maxFlightCount);
     AllocateDescriptorSets(maxFlightCount);
     UpdateDescriptorSets();
@@ -20,6 +23,8 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
 
 Renderer::~Renderer() {
     auto& device = Context::GetInstance().device;
+    device.destroySampler(sampler);
+    texture.reset();
     device.destroyDescriptorPool(descriptorPool_);
     verticesBuffer_.reset();
     indicesBuffer_.reset();
@@ -152,10 +157,10 @@ void Renderer::CreateCmdBuffers() {
 void Renderer::CreateBuffers() {
     auto& device = Context::GetInstance().device;
     verticesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eVertexBuffer,
-                                     sizeof(float) * 8,
+                                     sizeof(Vertex) * 4,
                                      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
     indicesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eIndexBuffer,
-                                    sizeof(float) * 6,
+                                    sizeof(uint32_t) * 6,
                                     vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
 }
 
@@ -192,38 +197,13 @@ void Renderer::CreateUniformBuffers(int flightCount) {
 }
 
 void Renderer::TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset) {
-    auto cmdBuf = Context::GetInstance().commandMgr->CreateACommandBuffer();
-
-    vk::CommandBufferBeginInfo beginInfo;
-    beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-    cmdBuf.begin(beginInfo);
-    {
+    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer& cmdBuf) {
         vk::BufferCopy region;
-        region
-            .setSize(size)
-            .setSrcOffset(srcOffset)
-            .setDstOffset(dstOffset);
+        region.setSrcOffset(srcOffset)
+            .setDstOffset(dstOffset)
+            .setSize(size);
         cmdBuf.copyBuffer(src.buffer, dst.buffer, region);
-    }
-    cmdBuf.end();
-
-    vk::SubmitInfo submitInfo;
-    submitInfo.setCommandBuffers(cmdBuf);
-    Context::GetInstance().graphicsQueue.submit(submitInfo);
-    Context::GetInstance().graphicsQueue.waitIdle();
-    Context::GetInstance().device.waitIdle();
-    Context::GetInstance().commandMgr->FreeCmd(cmdBuf);
-}
-
-std::uint32_t Renderer::QueryBufferMemTypeIndex(std::uint32_t type, vk::MemoryPropertyFlags flag) {
-    auto property = Context::GetInstance().phyDevice.getMemoryProperties();
-    for (std::uint32_t i = 0; i < property.memoryTypeCount; i++) {
-        if ((1 << i) & type &&
-            property.memoryTypes[i].propertyFlags & flag) {
-            return i;
-        }
-    }
-    return 0;
+    });
 }
 
 void Renderer::BufferData() {
@@ -232,23 +212,19 @@ void Renderer::BufferData() {
 }
 
 void Renderer::BufferVertexData() {
-    Vec2 vertices[] = {
-        {-0.5, -0.5},
-        {0.5, -0.5},
-        {0.5, 0.5},
-        {-0.5, 0.5},
+    Vertex vertices[] = {
+        {{-0.5, -0.5}, {0, 0}},
+        {{0.5, -0.5}, {1, 0}},
+        {{0.5, 0.5}, {1, 1}},
+        {{-0.5, 0.5}, {0, 1}},
     };
     memcpy(verticesBuffer_->map, vertices, sizeof(vertices));
 }
 
 void Renderer::BufferIndicesData() {
     std::uint32_t indices[] = {
-        0,
-        1,
-        2,
-        2,
-        3,
-        0,
+        0,1,3,
+        1,2,3,
     };
     memcpy(indicesBuffer_->map, indices, sizeof(indices));
 }
@@ -276,12 +252,16 @@ void Renderer::SetDrawColor(const Color& color) {
 
 void Renderer::CreateDescriptorPool(int flightCount) {
     vk::DescriptorPoolCreateInfo createInfo;
-    vk::DescriptorPoolSize poolSize;
-    poolSize.setType(vk::DescriptorType::eUniformBuffer)
+    std::vector<vk::DescriptorPoolSize> sizes(2);
+    sizes[0]
+        .setType(vk::DescriptorType::eUniformBuffer)
+        .setDescriptorCount(flightCount * 2);
+    sizes[1]
+        .setType(vk::DescriptorType::eCombinedImageSampler)
         .setDescriptorCount(flightCount);
 
-    std::vector<vk::DescriptorPoolSize> sizes(2, poolSize);
-    createInfo.setMaxSets(flightCount)
+    createInfo
+        .setMaxSets(flightCount)
         .setPoolSizes(sizes);
     descriptorPool_ = Context::GetInstance().device.createDescriptorPool(createInfo);
 }
@@ -308,7 +288,7 @@ void Renderer::UpdateDescriptorSets() {
             .setOffset(0)
             .setRange(sizeof(Mat4) * 2);
 
-        std::vector<vk::WriteDescriptorSet> writerInfos(2);
+        std::vector<vk::WriteDescriptorSet> writerInfos(3);
         writerInfos[0]
             .setDescriptorType(vk::DescriptorType::eUniformBuffer)
             .setDstSet(descriptorSets_[i])
@@ -332,8 +312,42 @@ void Renderer::UpdateDescriptorSets() {
             .setDescriptorCount(1)
             .setBufferInfo(bufferInfo2);
 
+        // bind texture
+        vk::DescriptorImageInfo imageInfo;
+        imageInfo
+            .setSampler(sampler)
+            .setImageView(texture->view)
+            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        writerInfos[2]
+            .setImageInfo(imageInfo)
+            .setDstBinding(2)
+            .setDstArrayElement(0)
+            .setDescriptorCount(1)
+            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+            .setDstSet(descriptorSets_[i]);
+
         Context::GetInstance().device.updateDescriptorSets(writerInfos, {});
     }
+}
+
+void Renderer::CreateSampler() {
+    vk::SamplerCreateInfo createInfo;
+    createInfo.setMagFilter(vk::Filter::eLinear)
+        .setMinFilter(vk::Filter::eLinear)
+        .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+        .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+        .setAnisotropyEnable(false)
+        .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+        .setUnnormalizedCoordinates(false)
+        .setCompareEnable(false)
+        .setMipmapMode(vk::SamplerMipmapMode::eLinear);
+    sampler = Context::GetInstance().device.createSampler(createInfo);
+}
+
+void Renderer::CreateTexture() {
+    texture.reset(new Texture(GetTestsPath("assets/texture.jpg")));
 }
 
 void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far) {
@@ -341,5 +355,15 @@ void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int
     BufferMVPData();
 }
 
+std::uint32_t QueryBufferMemTypeIndex(std::uint32_t type, vk::MemoryPropertyFlags flag) {
+    auto property = Context::GetInstance().phyDevice.getMemoryProperties();
+    for (std::uint32_t i = 0; i < property.memoryTypeCount; i++) {
+        if ((1 << i) & type &&
+            property.memoryTypes[i].propertyFlags & flag) {
+            return i;
+        }
+    }
+    return 0;
+}
 
 } // namespace Vklib

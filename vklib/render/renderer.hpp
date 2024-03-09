@@ -5,6 +5,7 @@
 #include "vklib/buffer/buffer.hpp"
 #include "vklib/math/uniform.hpp"
 #include "vklib/math/mat4.hpp"
+#include "vklib/texture/texture.hpp"
 #include <limits>
 
 namespace Vklib {
@@ -40,6 +41,9 @@ class Renderer final {
 
     std::vector<vk::DescriptorSet> descriptorSets_;
 
+    std::unique_ptr<Texture> texture;
+    vk::Sampler sampler;
+
     void InitMats();
 
     void CreateFences();
@@ -56,9 +60,12 @@ class Renderer final {
     void AllocateDescriptorSets(int flightCount);
     void UpdateDescriptorSets();
     void TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
-
-    std::uint32_t QueryBufferMemTypeIndex(std::uint32_t, vk::MemoryPropertyFlags);
+    void CreateSampler();
+    void CreateTexture();
 };
+
+std::uint32_t QueryBufferMemTypeIndex(std::uint32_t, vk::MemoryPropertyFlags);
+
 } // namespace Vklib
 
 #endif // VULKAN_LIB_RENDERER_HPP

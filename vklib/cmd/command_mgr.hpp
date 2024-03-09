@@ -2,6 +2,8 @@
 #define VULKAN_LIB_COMMAND_MGR_HPP
 
 #include "vulkan/vulkan.hpp"
+#include <functional>
+
 namespace Vklib {
 class CommandMgr final {
   public:
@@ -12,6 +14,9 @@ class CommandMgr final {
     std::vector<vk::CommandBuffer> CreateCommandBuffers(std::uint32_t count);
     void ResetCmds();
     void FreeCmd(const vk::CommandBuffer&);
+
+    using RecordCmdFunc = std::function<void(vk::CommandBuffer&)>;
+    void ExecuteCmd(vk::Queue, RecordCmdFunc);
 
   private:
     vk::CommandPool pool_;
