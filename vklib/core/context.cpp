@@ -31,10 +31,7 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
     }
     IO::PrintLog(LOG_LEVEL_INFO, "Physical device name: {}", phyDevice.getProperties().deviceName.data());
 
-    surface_ = getSurfaceCb_(instance);
-    if (!surface_) {
-        IO::ThrowError("Failed to create surface");
-    }
+    GetSurface();
 
     device = CreateDevice(surface_);
     if (!device) {
@@ -130,7 +127,7 @@ void Context::InitSwapchain(int windowWidth, int windowHeight) {
 }
 
 void Context::InitGraphicsPipeline() {
-    renderProcess->RecreateGraphicsPipeline(*shader);
+    renderProcess->CreateGraphicsPipeline(*shader);
 }
 
 void Context::InitCommandPool() {
@@ -157,6 +154,13 @@ void Context::InitSampler() {
         .setCompareEnable(false)
         .setMipmapMode(vk::SamplerMipmapMode::eLinear);
     sampler = Context::GetInstance().device.createSampler(createInfo);
+}
+
+void Context::GetSurface() {
+    surface_ = getSurfaceCb_(instance);
+    if (!surface_) {
+        IO::ThrowError("Failed to create surface");
+    }
 }
 
 } // namespace Vklib

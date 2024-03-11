@@ -6,7 +6,7 @@ namespace Vklib {
 
 RenderProcess::RenderProcess() {
     layout = CreateLayout();
-    renderPass = CreateRenderPass();
+    CreateRenderPass();
     graphicsPipeline = nullptr;
 }
 
@@ -17,18 +17,12 @@ RenderProcess::~RenderProcess() {
     ctx.device.destroyPipeline(graphicsPipeline);
 }
 
-void RenderProcess::RecreateGraphicsPipeline(const Shader& shader) {
-    if (graphicsPipeline) {
-        Context::GetInstance().device.destroyPipeline(graphicsPipeline);
-    }
-    graphicsPipeline = CreateGraphicsPipeline(shader);
+void RenderProcess::CreateGraphicsPipeline(const Shader& shader) {
+    graphicsPipeline = InternalCreateGraphicsPipeline(shader);
 }
 
-void RenderProcess::RecreateRenderPass() {
-    if (renderPass) {
-        Context::GetInstance().device.destroyRenderPass(renderPass);
-    }
-    renderPass = CreateRenderPass();
+void RenderProcess::CreateRenderPass() {
+    renderPass = InternalCreateRenderPass();
 }
 
 vk::PipelineLayout RenderProcess::CreateLayout() {
@@ -41,7 +35,7 @@ vk::PipelineLayout RenderProcess::CreateLayout() {
     return Context::GetInstance().device.createPipelineLayout(createInfo);
 }
 
-vk::Pipeline RenderProcess::CreateGraphicsPipeline(const Shader& shader) {
+vk::Pipeline RenderProcess::InternalCreateGraphicsPipeline(const Shader& shader) {
     auto& ctx = Context::GetInstance();
 
     vk::GraphicsPipelineCreateInfo createInfo;
@@ -125,6 +119,11 @@ vk::Pipeline RenderProcess::CreateGraphicsPipeline(const Shader& shader) {
         .setLogicOpEnable(false)
         .setAttachments(blendAttachmentStateInfo);
 
+    // dynamic changing state of pipeline
+    vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo;
+    std::array states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+    dynamicStateCreateInfo.setDynamicStates(states);
+
     // renderpass and layout
     createInfo
         .setStages(stageCreateInfos)
@@ -136,6 +135,7 @@ vk::Pipeline RenderProcess::CreateGraphicsPipeline(const Shader& shader) {
         .setPMultisampleState(&multisampleStateCreateInfo)
         .setPColorBlendState(&blendStateCreateInfo)
         .setRenderPass(renderPass);
+    // .setPDynamicState(&dynamicState);
 
     auto result = ctx.device.createGraphicsPipeline(nullptr, createInfo);
     if (result.result != vk::Result::eSuccess) {
@@ -145,7 +145,7 @@ vk::Pipeline RenderProcess::CreateGraphicsPipeline(const Shader& shader) {
     return result.value;
 }
 
-vk::RenderPass RenderProcess::CreateRenderPass() {
+vk::RenderPass RenderProcess::InternalCreateRenderPass() {
     auto& ctx = Context::GetInstance();
 
     vk::RenderPassCreateInfo createInfo;

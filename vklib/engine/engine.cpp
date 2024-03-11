@@ -40,4 +40,14 @@ Renderer* GetRenderer() {
     return renderer_.get();
 }
 
+void ResizeSwapchainImage(int w, int h) {
+    auto& ctx = Context::GetInstance();
+    ctx.device.waitIdle();
+
+    ctx.swapchain.reset();
+    ctx.GetSurface();
+    ctx.InitSwapchain(w, h);
+    ctx.swapchain->InitFramebuffers();
+}
+
 } // namespace Vklib

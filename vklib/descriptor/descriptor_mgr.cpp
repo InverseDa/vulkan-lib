@@ -90,7 +90,6 @@ void DescriptorSetMgr::FreeImageSet(const DescriptorSetMgr::SetInfo& info) {
         it->remainNum_++;
         return;
     }
-    Context::GetInstance().device.freeDescriptorSets(info.pool, info.set);
 }
 
 void DescriptorSetMgr::AddImageSetPool() {

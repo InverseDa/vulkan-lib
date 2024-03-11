@@ -16,6 +16,7 @@ void Quit();
 Renderer* GetRenderer();
 Texture* LoadTexture(const std::string& filename);
 void DestroyTexture(Texture*);
+void ResizeSwapchainImage(int w, int h);
 
 } // namespace Vklib
 
