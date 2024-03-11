@@ -20,8 +20,7 @@ int main(int argc, char** argv) {
     std::vector<const char*> extensions(count);
     SDL_Vulkan_GetInstanceExtensions(window, &count, extensions.data());
 
-    Vklib::Init(
-        extensions, [&](vk::Instance instance) {
+    Vklib::Init(extensions, [&](vk::Instance instance) {
         VkSurfaceKHR surface;
         if (!SDL_Vulkan_CreateSurface(window, instance, &surface)) {
             IO::ThrowError("SDL Can't create surface");
