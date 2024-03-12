@@ -72,9 +72,11 @@ int Application::Run() {
             renderer_->EndRender();
         }
         DestroyVulkan();
+        Vklib::TextureMgr::GetInstance().Destroy(texture1);
+        Vklib::TextureMgr::GetInstance().Destroy(texture2);
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
+        IO::PrintLog(LOG_LEVEL_ERROR, "Catch Exception: {}", e.what());
+        return -1;
     }
     return 0;
 }
