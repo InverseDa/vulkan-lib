@@ -18,8 +18,6 @@ namespace Vklib {
 class Context final {
   public:
     using GetSurfaceCallback = std::function<vk::SurfaceKHR(vk::Instance)>;
-    friend void Init(std::vector<const char*>&, GetSurfaceCallback, int, int);
-    friend void ResizeSwapchainImage(int w, int h);
 
     static void Init(std::vector<const char*>& extensions, GetSurfaceCallback);
     static void Quit();
@@ -47,6 +45,16 @@ class Context final {
     std::unique_ptr<CommandMgr> commandMgr;
     std::unique_ptr<Shader> shader;
     vk::Sampler sampler;
+
+    void ResizeSwapchainImage(int w, int h) {
+        auto& ctx = Context::GetInstance();
+        ctx.device.waitIdle();
+
+        ctx.swapchain.reset();
+        ctx.GetSurface();
+        ctx.InitSwapchain(w, h);
+        ctx.swapchain->InitFramebuffers();
+    }
 
     ~Context();
 

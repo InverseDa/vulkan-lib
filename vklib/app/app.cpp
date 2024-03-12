@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "core/context.hpp"
 
 std::unique_ptr<Application> Application::instance_ = nullptr;
 
@@ -61,6 +62,11 @@ int Application::Run() {
                 if (event_.type == SDL_QUIT) {
                     shouldClose = true;
                 }
+                if(event_.type == SDL_WINDOWEVENT) {
+                    if(event_.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                        Vklib::Context::GetInstance().ResizeSwapchainImage(event_.window.data1, event_.window.data2);
+                    }
+                }
             }
             renderer_->StartRender();
             renderer_->SetDrawColor(Color{1, 0, 0});
@@ -80,3 +86,5 @@ int Application::Run() {
     }
     return 0;
 }
+
+

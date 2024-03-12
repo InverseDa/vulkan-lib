@@ -8,11 +8,12 @@
 #include <vector>
 
 #include "log/log.hpp"
-#include "core/context.hpp"
 #include "render/renderer.hpp"
+#include "core/context.hpp"
 
 class Application {
   public:
+    friend class Vklib::Context;
     static Application* GetInstance(const std::string& title, float width, float height) {
         if (!instance_) {
             instance_.reset(new Application(title, width, height));
