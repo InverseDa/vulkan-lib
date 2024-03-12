@@ -163,6 +163,10 @@ class Mat4 {
         return mat;
     }
 
+    Vec4* GetData() {
+        return data_.data();
+    }
+
   private:
     // Column-major order
     std::array<Vec4, 4> data_;

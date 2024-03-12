@@ -15,7 +15,9 @@ class Renderer final {
     ~Renderer();
 
     // TODO: temporary draw rect, implement this function
-    void Draw(const Rect&, Texture&);
+    void DrawRect(const Rect&, Texture&);
+    void DrawLine(const Vec2& p1, const Vec2& p2);
+
     void SetDrawColor(const Color& color);
     void SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far);
 
@@ -30,8 +32,9 @@ class Renderer final {
     std::vector<vk::Semaphore> imageAvaliableSems_;
     std::vector<vk::Semaphore> renderFinishSems_;
     std::vector<vk::CommandBuffer> cmdBufs_;
-    std::unique_ptr<Buffer> verticesBuffer_;
-    std::unique_ptr<Buffer> indicesBuffer_;
+    std::unique_ptr<Buffer> rectVerticesBuffer_;
+    std::unique_ptr<Buffer> rectIndicesBuffer_;
+    std::unique_ptr<Buffer> lineVerticesBuffer_;
 
     Mat4 projectionMat_;
     Mat4 viewMat_;
@@ -45,6 +48,8 @@ class Renderer final {
 
     vk::Sampler sampler;
 
+    Texture* whiteTexture;
+
     void InitMats();
 
     void CreateFences();
@@ -52,15 +57,20 @@ class Renderer final {
     void CreateCmdBuffers();
     void CreateBuffers();
     void CreateUniformBuffers(int flightCount);
-    void BufferVertexData();
-    void BufferIndicesData();
+
+    void BufferRectData();
+    void BufferRectVertexData();
+    void BufferRectIndicesData();
+
+    void BufferLineData(const Vec2& p1, const Vec2& p2);
+
     void BufferMVPData();
     void BufferData();
     void UpdateDescriptorSets();
     void TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
+    void CreateWhiteTexture();
 };
 
-std::uint32_t QueryBufferMemTypeIndex(std::uint32_t, vk::MemoryPropertyFlags);
 
 } // namespace Vklib
 

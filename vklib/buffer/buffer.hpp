@@ -4,8 +4,7 @@
 #include "vulkan/vulkan.hpp"
 
 namespace Vklib {
-class Buffer final {
-  public:
+struct Buffer {
     vk::Buffer buffer;
     vk::DeviceMemory memory;
     void* map;
@@ -14,11 +13,11 @@ class Buffer final {
 
     Buffer(vk::BufferUsageFlags usage, size_t size, vk::MemoryPropertyFlags memProperty);
     ~Buffer();
-
-  private:
-
-    std::uint32_t QueryBufferMemTypeIndex(std::uint32_t requirementBit, vk::MemoryPropertyFlags);
 };
+
+std::uint32_t QueryBufferMemTypeIndex(std::uint32_t, vk::MemoryPropertyFlags);
+
 } // namespace Vklib
+
 
 #endif // VULKAN_LIB_BUFFER_HPP

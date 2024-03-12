@@ -20,6 +20,8 @@ class Texture final {
 
   private:
     Texture(std::string_view filename);
+    Texture(void* pixels, uint32_t w, uint32_t h);
+
     void CreateImage(uint32_t w, uint32_t h);
     void CreateImageView();
     void AllocateMemory();
@@ -28,6 +30,8 @@ class Texture final {
     void TransitionImageLayoutFromDst2Optimal();
     void TransformData2Image(Buffer&, uint32_t w, uint32_t h);
     void UpdateDescriptorSet();
+
+    void Init(void* pixels, uint32_t w, uint32_t h);
 };
 
 class TextureMgr final {
@@ -40,6 +44,7 @@ class TextureMgr final {
     }
 
     Texture* Load(const std::string& filename);
+    Texture* Create(void* pixels, uint32_t w, uint32_t h);
     void Destroy(Texture*);
     void Clear();
 

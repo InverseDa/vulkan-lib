@@ -41,7 +41,7 @@ Buffer::~Buffer() {
     device.destroyBuffer(buffer);
 }
 
-std::uint32_t Buffer::QueryBufferMemTypeIndex(std::uint32_t type, vk::MemoryPropertyFlags flag) {
+std::uint32_t QueryBufferMemTypeIndex(std::uint32_t type, vk::MemoryPropertyFlags flag) {
     auto property = Context::GetInstance().phyDevice.getMemoryProperties();
 
     for (std::uint32_t i = 0; i < property.memoryTypeCount; i++) {

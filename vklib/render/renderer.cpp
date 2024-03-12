@@ -12,17 +12,17 @@ Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Fra
     CreateCmdBuffers();
     CreateBuffers();
     CreateUniformBuffers(maxFlightCount);
-    BufferData();
     descriptorSets_ = DescriptorSetMgr::GetInstance().AllocateBufferSets(maxFlightCount);
     UpdateDescriptorSets();
     InitMats();
+    CreateWhiteTexture();
 }
 
 Renderer::~Renderer() {
     auto& device = Context::GetInstance().device;
     device.destroySampler(sampler);
-    verticesBuffer_.reset();
-    indicesBuffer_.reset();
+    rectVerticesBuffer_.reset();
+    rectIndicesBuffer_.reset();
     uniformBuffers_.clear();
     colorBuffers_.clear();
     for (auto& sem : imageAvaliableSems_) {
@@ -41,23 +41,49 @@ void Renderer::InitMats() {
     projectionMat_ = Mat4::CreateIdentity();
 }
 
-void Renderer::Draw(const Rect& rect, Texture& texture) {
+void Renderer::DrawRect(const Rect& rect, Texture& texture) {
     auto& ctx = Context::GetInstance();
     auto& device = ctx.device;
     auto& cmd = cmdBufs_[cur_Frame_];
-
     vk::DeviceSize offset = 0;
-    cmd.bindVertexBuffers(0, verticesBuffer_->buffer, offset);
-    cmd.bindIndexBuffer(indicesBuffer_->buffer, 0, vk::IndexType::eUint32);
+
+    BufferRectData();
+
+    cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, ctx.renderProcess->graphicsPipelineTriangleTopology);
+    cmd.bindVertexBuffers(0, rectVerticesBuffer_->buffer, offset);
+    cmd.bindIndexBuffer(rectIndicesBuffer_->buffer, 0, vk::IndexType::eUint32);
+
     auto& layout = Context::GetInstance().renderProcess->layout;
     cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                            layout,
                            0,
-                           { descriptorSets_[cur_Frame_].set, texture.set.set},
+                           {descriptorSets_[cur_Frame_].set, texture.set.set},
                            {});
     auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
-    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), &model);
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), model.GetData());
     cmd.drawIndexed(6, 1, 0, 0, 0);
+}
+
+void Renderer::DrawLine(const Vec2& p1, const Vec2& p2) {
+    auto& ctx = Context::GetInstance();
+    auto& device = ctx.device;
+    auto& cmd = cmdBufs_[cur_Frame_];
+    vk::DeviceSize offset = 0;
+
+    BufferLineData(p1, p2);
+
+    cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, ctx.renderProcess->graphicsPipelineLineTopology);
+    cmd.bindVertexBuffers(0, lineVerticesBuffer_->buffer, offset);
+
+    auto& layout = Context::GetInstance().renderProcess->layout;
+    cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                           layout,
+                           0,
+                           {descriptorSets_[cur_Frame_].set, whiteTexture->set.set},
+                           {});
+    auto model = Mat4::CreateIdentity();
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), model.GetData());
+    cmd.draw(2, 1, 0, 0);
 }
 
 void Renderer::StartRender() {
@@ -96,9 +122,6 @@ void Renderer::StartRender() {
         .setClearValues(clearValue);
 
     cmd.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-
-    cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, ctx.renderProcess->graphicsPipeline);
-
 }
 
 void Renderer::EndRender() {
@@ -162,12 +185,15 @@ void Renderer::CreateCmdBuffers() {
 
 void Renderer::CreateBuffers() {
     auto& device = Context::GetInstance().device;
-    verticesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eVertexBuffer,
-                                     sizeof(Vertex) * 4,
-                                     vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
-    indicesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eIndexBuffer,
-                                    sizeof(uint32_t) * 6,
-                                    vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+    rectVerticesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eVertexBuffer,
+                                         sizeof(Vertex) * 4,
+                                         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+    rectIndicesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eIndexBuffer,
+                                        sizeof(uint32_t) * 6,
+                                        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+    lineVerticesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eVertexBuffer,
+                                         sizeof(Vertex) * 2,
+                                         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
 }
 
 void Renderer::CreateUniformBuffers(int flightCount) {
@@ -212,22 +238,22 @@ void Renderer::TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t 
     });
 }
 
-void Renderer::BufferData() {
-    BufferVertexData();
-    BufferIndicesData();
+void Renderer::BufferRectData() {
+    BufferRectVertexData();
+    BufferRectIndicesData();
 }
 
-void Renderer::BufferVertexData() {
+void Renderer::BufferRectVertexData() {
     Vertex vertices[] = {
         {{-0.5, -0.5}, {0, 0}},
         {{0.5, -0.5}, {1, 0}},
         {{0.5, 0.5}, {1, 1}},
         {{-0.5, 0.5}, {0, 1}},
     };
-    memcpy(verticesBuffer_->map, vertices, sizeof(vertices));
+    memcpy(rectVerticesBuffer_->map, vertices, sizeof(vertices));
 }
 
-void Renderer::BufferIndicesData() {
+void Renderer::BufferRectIndicesData() {
     std::uint32_t indices[] = {
         0,
         1,
@@ -236,7 +262,15 @@ void Renderer::BufferIndicesData() {
         2,
         3,
     };
-    memcpy(indicesBuffer_->map, indices, sizeof(indices));
+    memcpy(rectIndicesBuffer_->map, indices, sizeof(indices));
+}
+
+void Renderer::BufferLineData(const Vec2& p1, const Vec2& p2) {
+    Vertex vertices[] = {
+        {p1, {0, 0}},
+        {p2, {0, 0}},
+    };
+    memcpy(lineVerticesBuffer_->map, vertices, sizeof(vertices));
 }
 
 void Renderer::BufferMVPData() {
@@ -302,15 +336,9 @@ void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int
     BufferMVPData();
 }
 
-std::uint32_t QueryBufferMemTypeIndex(std::uint32_t type, vk::MemoryPropertyFlags flag) {
-    auto property = Context::GetInstance().phyDevice.getMemoryProperties();
-    for (std::uint32_t i = 0; i < property.memoryTypeCount; i++) {
-        if ((1 << i) & type &&
-            property.memoryTypes[i].propertyFlags & flag) {
-            return i;
-        }
-    }
-    return 0;
+void Renderer::CreateWhiteTexture() {
+    unsigned char data[] = {0xFF, 0xFF, 0xFF, 0xFF};
+    whiteTexture = TextureMgr::GetInstance().Create((void*)data, 1, 1);
 }
 
 } // namespace Vklib

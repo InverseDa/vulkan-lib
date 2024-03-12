@@ -11,7 +11,8 @@ class RenderProcess final {
     // 在Vulkan中，管线由多个阶段组成，包括顶点输入、顶点着色器、几何着色器、光栅化、片段着色器和输出合并等。
     // pipeline对象包含了这些阶段的配置信息，例如顶点着色器和片段着色器的着色器模块、顶点输入的格式、光栅化的方式、深度测试和混合操作等。
     // pipeline对象是图形渲染的核心，用于配置GPU的渲染操作。
-    vk::Pipeline graphicsPipeline = nullptr;
+    vk::Pipeline graphicsPipelineTriangleTopology = nullptr;
+    vk::Pipeline graphicsPipelineLineTopology = nullptr;
     vk::RenderPass renderPass = nullptr;
     // pipelineLayout是一个Vulkan中的对象，用于定义着色器程序（Shader）和管线资源之间的接口。
     // 它描述了着色器程序所需的Uniform缓冲区、纹理和其他资源绑定点。pipelineLayout定义了着色器程序的资源布局，
@@ -26,9 +27,11 @@ class RenderProcess final {
     void CreateRenderPass();
 
   private:
+    vk::PipelineCache pipelineCache_ = nullptr;
     vk::PipelineLayout CreateLayout();
-    vk::Pipeline InternalCreateGraphicsPipeline(const Shader& shader);
+    vk::Pipeline InternalCreateGraphicsPipeline(const Shader& shader, vk::PrimitiveTopology topology);
     vk::RenderPass InternalCreateRenderPass();
+    vk::PipelineCache CreatePipelineCache();
 };
 } // namespace Vklib
 

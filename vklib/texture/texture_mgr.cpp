@@ -9,6 +9,11 @@ Texture* TextureMgr::Load(const std::string& filename) {
     return textures_.back().get();
 }
 
+Texture* TextureMgr::Create(void* pixels, uint32_t w, uint32_t h) {
+    textures_.push_back(std::unique_ptr<Texture>(new Texture(pixels, w, h)));
+    return textures_.back().get();
+}
+
 void TextureMgr::Clear() {
     textures_.clear();
 }

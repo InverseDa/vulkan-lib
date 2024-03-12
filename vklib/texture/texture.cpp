@@ -9,12 +9,20 @@ namespace Vklib {
 Texture::Texture(std::string_view filename) {
     int w, h, channel;
     stbi_uc* pixels = stbi_load(filename.data(), &w, &h, &channel, STBI_rgb_alpha);
-    size_t size = w * h * 4;
 
     if (!pixels) {
         throw std::runtime_error("image load failed");
     }
+    Init(pixels, w, h);
+    stbi_image_free(pixels);
+}
 
+Texture::Texture(void* pixels, uint32_t w, uint32_t h) {
+    Init(pixels, w, h);
+}
+
+void Texture::Init(void* pixels, uint32_t w, uint32_t h) {
+    size_t size = w * h * 4;
     std::unique_ptr<Buffer> buffer(new Buffer(vk::BufferUsageFlagBits::eTransferSrc,
                                               size,
                                               vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible));
@@ -29,8 +37,6 @@ Texture::Texture(std::string_view filename) {
     TransitionImageLayoutFromDst2Optimal();
 
     CreateImageView();
-
-    stbi_image_free(pixels);
 
     set = DescriptorSetMgr::GetInstance().AllocateImageSet();
     UpdateDescriptorSet();
