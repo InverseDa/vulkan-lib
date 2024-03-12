@@ -13,7 +13,7 @@ class Shader final {
     [[nodiscard]] vk::ShaderModule GetFragModule() const { return fragModule_; }
 
     [[nodiscard]] const std::vector<vk::DescriptorSetLayout>& GetDescriptorSetLayouts() const { return layouts_; }
-    [[nodiscard]] vk::PushConstantRange GetPushConstantRange() const;
+    [[nodiscard]] std::vector<vk::PushConstantRange> GetPushConstantRange() const;
 
   private:
     vk::ShaderModule vertexModule_;

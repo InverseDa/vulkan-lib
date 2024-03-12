@@ -67,8 +67,11 @@ int main(int argc, char** argv) {
             }
         }
         renderer->StartRender();
+        renderer->SetDrawColor(Color{1, 0, 0});
         renderer->DrawRect(Rect{{x, y}, Size{200, 300}}, *texture1);
+        renderer->SetDrawColor(Color{0, 1, 0});
         renderer->DrawRect(Rect{{500, 100}, Size{200, 300}}, *texture2);
+        renderer->SetDrawColor(Color{0, 0, 1});
         renderer->DrawLine(Vec2{0, 0}, Vec2{WIDTH, HEIGHT});
         renderer->EndRender();
     }

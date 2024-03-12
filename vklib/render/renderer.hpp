@@ -40,15 +40,14 @@ class Renderer final {
     Mat4 viewMat_;
 
     std::vector<std::unique_ptr<Buffer>> uniformBuffers_;
-    std::vector<std::unique_ptr<Buffer>> colorBuffers_;
     std::vector<std::unique_ptr<Buffer>> deviceUniformBuffers_;
-    std::vector<std::unique_ptr<Buffer>> deviceColorBuffers_;
 
     std::vector<DescriptorSetMgr::SetInfo> descriptorSets_;
 
     vk::Sampler sampler;
 
     Texture* whiteTexture;
+    Color drawColor_ = {1, 1, 1};
 
     void InitMats();
 
