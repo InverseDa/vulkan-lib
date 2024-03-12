@@ -130,6 +130,17 @@ class Mat4 {
         return mat;
     }
 
+    static Mat4 CreatePerspective(float fov, float aspect, float near, float far) {
+        Mat4 mat;
+        float tanHalfFov = tan(fov / 2.f);
+        mat[0][0] = 1.f / (aspect * tanHalfFov);
+        mat[1][1] = 1.f / tanHalfFov;
+        mat[2][2] = (far + near) / (near - far);
+        mat[2][3] = -1;
+        mat[3][2] = (2 * far * near) / (near - far);
+        return mat;
+    }
+
     static Mat4 CreateTranslate(const Vec4& pos) {
         Mat4 mat;
         mat[3] = pos;
