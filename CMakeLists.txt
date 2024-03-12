@@ -16,9 +16,6 @@ include(cmake/CompileShaders.cmake)
 # 添加宏
 add_compile_definitions(PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}/")
 
-# 遍历vklib/的每个文件夹里的每个cpp，并加入到编译列表中
-# 比如vklib/app/*.cpp
-# 比如vklib/vkInstance/*.cpp
 set(VKLIB_DIR "${PROJECT_SOURCE_DIR}/vklib")
 set(VKLIB_SRCS)
 file(GLOB VKLIB_SUBDIRS RELATIVE ${VKLIB_DIR} ${VKLIB_DIR}/*)
@@ -31,8 +28,9 @@ endforeach ()
 
 add_library(vulkan_lib STATIC ${VKLIB_SRCS})
 
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/vklib)
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/include)
 
 target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
