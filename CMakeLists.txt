@@ -37,5 +37,9 @@ target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
 target_link_libraries(vulkan_lib PRIVATE glfw)
 target_link_libraries(vulkan_lib PUBLIC SDL2)
 
-add_subdirectory(tests/vkFirstTest)
-
+file(GLOB TEST_PROJECTS RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*)
+foreach (TEST_PROJECT ${TEST_PROJECTS})
+    if (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/${TEST_PROJECT})
+        add_subdirectory(tests/${TEST_PROJECT})
+    endif ()
+endforeach ()

@@ -3,48 +3,43 @@
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_vulkan.h"
+#include "vulkan/vulkan.hpp"
+#include <memory>
+#include <vector>
 
-class SDLWindow {
+#include "log/log.hpp"
+#include "core/context.hpp"
+#include "render/renderer.hpp"
+
+class Application {
   public:
-    SDLWindow(int w, int h);
-    ~SDLWindow();
+    static Application* GetInstance(const std::string& title, float width, float height) {
+        if (!instance_) {
+            instance_.reset(new Application(title, width, height));
+        }
+        return instance_.get();
+    }
 
-    void SetTitle(const char* title);
-    void SetSize(int w, int h);
-    void SetPosition(int x, int y);
-    void SetFullscreen(bool fullscreen);
-    void SetResizable(bool resizable);
-    void SetBorderless(bool borderless);
-    void SetMinimized(bool minimized);
-    void SetMaximized(bool maximized);
-    void SetInputFocus();
-    void SetMouseFocus();
-    void SetGrab(bool grabbed);
-    void SetCursorVisible(bool visible);
-    void SetIcon(const char* path);
-    void SetOpacity(float opacity);
-    void SetBrightness(float brightness);
-    void SetGamma(float red, float green, float blue);
-    void SetCursor(const char* path);
-    void SetCursor(SDL_Cursor* cursor);
-    void SetRelativeMouseMode(bool enabled);
-    void SetWindowedMode(int w, int h);
-    void SetFullscreenMode(int w, int h);
-    void SetDisplayMode(int w, int h);
-    void SetDisplayMode(int displayIndex, int w, int h);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate, int pixelFormat);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate, int pixelFormat, int flags);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate, int pixelFormat, int flags, int gammaRampSize);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate, int pixelFormat, int flags, int gammaRampSize, const Uint16* red, const Uint16* green, const Uint16* blue);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate, int pixelFormat, int flags, int gammaRampSize, const Uint16* red, const Uint16* green, const Uint16* blue, const Uint16* alpha);
-    void SetDisplayMode(int displayIndex, int w, int h, int refreshRate, int pixelFormat, int flags, int gammaRampSize, const Uint16* red, const Uint16* green, const Uint16* blue, const Uint16* alpha, const Uint16* gammaRamp);
+    ~Application();
+
+    int Run();
 
   private:
-    SDL_Window* window_;
-    int width_;
-    int height_;
+    static std::unique_ptr<Application> instance_;
+    std::unique_ptr<Vklib::Context> ctx_;
+    std::unique_ptr<Vklib::Renderer> renderer_;
 
+    std::string title_;
+    float width_;
+    float height_;
+
+    SDL_Event event_;
+    SDL_Window* window_;
+    bool shouldClose = false;
+
+    Application(const std::string& title, float width, float height);
+    void InitVulkan(std::vector<const char*>& extensions, Vklib::Context::GetSurfaceCallback cb, int windowWidth, int windowHeight);
+    void DestroyVulkan();
 };
 
 #endif // VULKAN_LIB_APP_HPP

@@ -24,6 +24,8 @@ class Context final {
     static void Init(std::vector<const char*>& extensions, GetSurfaceCallback);
     static void Quit();
 
+    void InitVulkan(int windowWidth, int windowHeight);
+
     static Context& GetInstance();
 
     struct QueueInfo final {
@@ -46,6 +48,8 @@ class Context final {
     std::unique_ptr<Shader> shader;
     vk::Sampler sampler;
 
+    ~Context();
+
   private:
     static Context* instance_;
     vk::SurfaceKHR surface_ = nullptr;
@@ -53,7 +57,6 @@ class Context final {
     GetSurfaceCallback getSurfaceCb_ = nullptr;
 
     Context(std::vector<const char*>& extensions, GetSurfaceCallback);
-    ~Context();
 
     void InitRenderProcess();
     void InitSwapchain(int windowWidth, int windowHeight);

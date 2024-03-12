@@ -163,4 +163,14 @@ void Context::GetSurface() {
     }
 }
 
+void Context::InitVulkan(int windowWidth, int windowHeight) {
+    InitSwapchain(windowWidth, windowHeight);
+    InitShaderModules();
+    InitRenderProcess();
+    InitGraphicsPipeline();
+    swapchain->InitFramebuffers();
+    InitCommandPool();
+    InitSampler();
+}
+
 } // namespace Vklib
