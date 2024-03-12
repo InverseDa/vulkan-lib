@@ -2,7 +2,7 @@
 #define VULKAN_LIB_RENDER_PROCESS_HPP
 
 #include "vulkan/vulkan.hpp"
-#include "vklib/shader/shader.hpp"
+#include "shader/shader.hpp"
 
 namespace Vklib {
 class RenderProcess final {

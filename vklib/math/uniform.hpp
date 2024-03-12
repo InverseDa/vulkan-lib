@@ -2,7 +2,7 @@
 #define VULKAN_LIB_UNIFORM_HPP
 
 #include "vulkan/vulkan.hpp"
-#include "vklib/math/vec2.hpp"
+#include "math/vec2.hpp"
 
 using Size = Vec2;
 

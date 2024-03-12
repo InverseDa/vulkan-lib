@@ -1,8 +1,8 @@
 #include "renderer.hpp"
-#include "vklib/core/context.hpp"
-#include "vklib/math/vec2.hpp"
-#include "vklib/math/uniform.hpp"
-#include "vklib/mesh/vertex.hpp"
+#include "core/context.hpp"
+#include "math/vec2.hpp"
+#include "math/uniform.hpp"
+#include "mesh/vertex.hpp"
 
 namespace Vklib {
 

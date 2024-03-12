@@ -4,8 +4,8 @@
 #include "vulkan/vulkan.hpp"
 #include <string_view>
 
-#include "vklib/buffer/buffer.hpp"
-#include "vklib/descriptor/descriptor_mgr.hpp"
+#include "buffer/buffer.hpp"
+#include "descriptor/descriptor_mgr.hpp"
 
 namespace Vklib {
 class Texture final {

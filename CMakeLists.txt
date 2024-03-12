@@ -29,9 +29,9 @@ foreach (SUBDIR ${VKLIB_SUBDIRS})
     endif ()
 endforeach ()
 
-add_executable(vulkan_lib tests/main.cpp ${VKLIB_SRCS})
+add_library(vulkan_lib STATIC ${VKLIB_SRCS})
 
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR})
+target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/vklib)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/include)
 
@@ -39,4 +39,5 @@ target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
 target_link_libraries(vulkan_lib PRIVATE glfw)
 target_link_libraries(vulkan_lib PUBLIC SDL2)
 
-CopyDLL(vulkan_lib)
+add_subdirectory(tests/vkFirstTest)
+

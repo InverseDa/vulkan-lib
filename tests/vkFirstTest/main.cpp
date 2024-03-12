@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-#include "vklib/engine/engine.hpp"
+#include "engine/engine.hpp"
 
 constexpr int WIDTH = 1024;
 constexpr int HEIGHT = 720;
@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
 
     float x = 100, y = 100;
     renderer->SetDrawColor(Color{1, 1, 1});
-    Vklib::Texture* texture1 = Vklib::LoadTexture(GetTestsPath("assets/texture.jpg"));
-    Vklib::Texture* texture2 = Vklib::LoadTexture(GetTestsPath("assets/role.png"));
+    Vklib::Texture* texture1 = Vklib::LoadTexture(GetTestsPath("vkFirstTest/assets/texture.jpg"));
+    Vklib::Texture* texture2 = Vklib::LoadTexture(GetTestsPath("vkFirstTest/assets/role.png"));
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {

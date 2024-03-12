@@ -1,5 +1,5 @@
 #include "texture.hpp"
-#include "vklib/core/context.hpp"
+#include "core/context.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"

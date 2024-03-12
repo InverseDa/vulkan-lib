@@ -2,10 +2,10 @@
 #define VULKAN_LIB_RENDERER_HPP
 
 #include "vulkan/vulkan.hpp"
-#include "vklib/buffer/buffer.hpp"
-#include "vklib/math/uniform.hpp"
-#include "vklib/math/mat4.hpp"
-#include "vklib/texture/texture.hpp"
+#include "buffer/buffer.hpp"
+#include "math/uniform.hpp"
+#include "math/mat4.hpp"
+#include "texture/texture.hpp"
 #include <limits>
 
 namespace Vklib {

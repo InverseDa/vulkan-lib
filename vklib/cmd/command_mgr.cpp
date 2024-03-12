@@ -1,5 +1,5 @@
 #include "command_mgr.hpp"
-#include "vklib/core/context.hpp"
+#include "core/context.hpp"
 
 namespace Vklib {
 

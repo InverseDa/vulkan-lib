@@ -1,5 +1,5 @@
 #include "descriptor_mgr.hpp"
-#include "vklib/core/context.hpp"
+#include "core/context.hpp"
 
 namespace Vklib {
 std::unique_ptr<DescriptorSetMgr> DescriptorSetMgr::instance_ = nullptr;

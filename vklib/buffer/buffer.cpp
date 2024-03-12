@@ -1,5 +1,5 @@
 #include "buffer.hpp"
-#include "vklib/core/context.hpp"
+#include "core/context.hpp"
 
 namespace Vklib {
 Buffer::Buffer(vk::BufferUsageFlags usage, size_t size, vk::MemoryPropertyFlags memProperty) {

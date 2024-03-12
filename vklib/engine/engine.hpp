@@ -3,11 +3,11 @@
 
 #include "vulkan/vulkan.hpp"
 
-#include "vklib/core/context.hpp"
-#include "vklib/render/renderer.hpp"
-#include "vklib/math/vec2.hpp"
-#include "vklib/math/uniform.hpp"
-#include "vklib/texture/texture.hpp"
+#include "core/context.hpp"
+#include "render/renderer.hpp"
+#include "math/vec2.hpp"
+#include "math/uniform.hpp"
+#include "texture/texture.hpp"
 
 namespace Vklib {
 void Init(std::vector<const char*>& extensions, Context::GetSurfaceCallback cb, int windowWidth, int windowHeight);

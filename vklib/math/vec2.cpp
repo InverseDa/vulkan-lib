@@ -1,5 +1,5 @@
 #include "vec2.hpp"
-#include "vklib/mesh/vertex.hpp"
+#include "mesh/vertex.hpp"
 
 std::vector<vk::VertexInputAttributeDescription> Vec2::GetAttributeDescription() {
     std::vector<vk::VertexInputAttributeDescription> descriptions(2);

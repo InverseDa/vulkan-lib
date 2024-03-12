@@ -1,6 +1,6 @@
 #include "context.hpp"
 #include "log/log.hpp"
-#include "vklib/tools.hpp"
+#include "tools.hpp"
 
 namespace Vklib {
 Context* Context::instance_ = nullptr;
@@ -135,8 +135,8 @@ void Context::InitCommandPool() {
 }
 
 void Context::InitShaderModules() {
-    auto vertexSource = ReadWholeFile(GetTestsPath("shaders/frag.spv"));
-    auto fragSource = ReadWholeFile(GetTestsPath("shaders/vert.spv"));
+    auto vertexSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/frag.spv"));
+    auto fragSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/vert.spv"));
     shader = std::make_unique<Shader>(vertexSource, fragSource);
 }
 

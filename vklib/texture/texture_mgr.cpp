@@ -1,5 +1,5 @@
 #include "texture.hpp"
-#include "vklib/core/context.hpp"
+#include "core/context.hpp"
 
 namespace Vklib {
 std::unique_ptr<TextureMgr> TextureMgr::instance_ = nullptr;

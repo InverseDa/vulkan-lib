@@ -3,7 +3,7 @@
 
 #include "vulkan/vulkan.hpp"
 
-#include "vklib/math/vec2.hpp"
+#include "math/vec2.hpp"
 
 struct Vertex final {
     Vec2 pos;

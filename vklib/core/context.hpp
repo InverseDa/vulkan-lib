@@ -7,12 +7,12 @@
 #include <iostream>
 #include <optional>
 
-#include "vklib/tools.hpp"
-#include "vklib/swapchain/swapchain.hpp"
-#include "vklib/render/render_process.hpp"
-#include "vklib/render/renderer.hpp"
-#include "vklib/cmd/command_mgr.hpp"
-#include "vklib/shader/shader.hpp"
+#include "tools.hpp"
+#include "swapchain/swapchain.hpp"
+#include "render/render_process.hpp"
+#include "render/renderer.hpp"
+#include "cmd/command_mgr.hpp"
+#include "shader/shader.hpp"
 
 namespace Vklib {
 class Context final {

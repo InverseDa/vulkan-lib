@@ -1,6 +1,6 @@
 #include "render_process.hpp"
-#include "vklib/core/context.hpp"
-#include "vklib/math/vec2.hpp"
+#include "core/context.hpp"
+#include "math/vec2.hpp"
 
 namespace Vklib {
 

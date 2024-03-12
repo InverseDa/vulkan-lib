@@ -1,5 +1,5 @@
 #include "swapchain.hpp"
-#include "vklib/core/context.hpp"
+#include "core/context.hpp"
 
 namespace Vklib {
 Swapchain::Swapchain(vk::SurfaceKHR surface, int windowWidth, int windowHeight) : surface(surface) {
