@@ -43,6 +43,12 @@ std::vector<vk::VertexInputAttributeDescription> ShaderMgr::GetVertex2AttributeD
         .setFormat(vk::Format::eR32G32Sfloat)
         .setLocation(0)
         .setOffset(0);
+    // normal
+    descriptions[1]
+        .setBinding(0)
+        .setFormat(vk::Format::eR32G32Sfloat)
+        .setLocation(1)
+        .setOffset(offsetof(Vertex2, normal));
     // texcoord
     descriptions[1]
         .setBinding(0)

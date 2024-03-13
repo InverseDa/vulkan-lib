@@ -8,6 +8,7 @@
 
 struct Vertex2 final {
     float2 pos;
+    float2 normal;
     float2 texCoord;
 };
 

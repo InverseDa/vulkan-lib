@@ -7,6 +7,7 @@
 #include "math/vector.hpp"
 #include "mesh/vertex.hpp"
 
+namespace Vklib {
 class DrawObject2D {
   public:
     std::vector<Vertex2> vertices;
@@ -22,5 +23,6 @@ class DrawObject3D {
 
   private:
 };
+} // namespace Vklib
 
 #endif // VULKAN_LIB_DRAW_OBJECT_HPP

@@ -2,7 +2,8 @@
 #pragma shader_stage(vertex)
 
 layout(location = 0) in vec2 inPosition;
-layout(location = 1) in vec2 inTexCoord;
+layout(location = 1) in vec2 inNormal;
+layout(location = 2) in vec2 inTexCoord;
 
 layout(location = 0) out vec2 outTexCoord;
 
