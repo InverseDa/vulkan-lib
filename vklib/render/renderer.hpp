@@ -24,8 +24,10 @@ class Renderer final {
     void StartRender();
     void EndRender();
 
+    static int GetMaxFlightCount() { return maxFightCount_; }
+
   private:
-    int maxFightCount_;
+    static int maxFightCount_;
     int cur_Frame_;
     uint32_t imageIndex_;
     std::vector<vk::Fence> fences_;
@@ -68,7 +70,6 @@ class Renderer final {
     void TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
     void CreateWhiteTexture();
 };
-
 
 } // namespace Vklib
 

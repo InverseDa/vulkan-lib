@@ -5,8 +5,10 @@
 #include "mesh/vertex.hpp"
 
 namespace Vklib {
+int Renderer::maxFightCount_ = 0;
 
-Renderer::Renderer(int maxFlightCount) : maxFightCount_(maxFlightCount), cur_Frame_(0) {
+Renderer::Renderer(int maxFlightCount) : cur_Frame_(0) {
+    maxFightCount_ = maxFlightCount;
     CreateFences();
     CreateSemaphores();
     CreateCmdBuffers();

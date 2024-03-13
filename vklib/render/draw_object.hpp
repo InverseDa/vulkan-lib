@@ -6,22 +6,49 @@
 
 #include "math/vector.hpp"
 #include "mesh/vertex.hpp"
+#include "buffer/buffer.hpp"
 
 namespace Vklib {
 class DrawObject2D {
   public:
-    std::vector<Vertex2> vertices;
-    std::vector<unsigned int> indices;
+    DrawObject2D(std::vector<Vertex2>& vertices, std::vector<std::uint32_t>& indices);
+    virtual void Draw();
 
-  private:
+  protected:
+    std::vector<Vertex2> vertices;
+    std::vector<std::uint32_t> indices;
+
+    std::unique_ptr<Buffer> vertexBuffers_;
+    std::unique_ptr<Buffer> indexBuffers_;
+
+    std::vector<std::unique_ptr<Buffer>> uniformBuffers_;
+    std::vector<std::unique_ptr<Buffer>> deviceUniformBuffers_;
+
+    virtual void CreateVertexAndIndexBuffer();
+    virtual void CreateUniformBuffer();
+    virtual void BufferVertexAndIndexData();
+    virtual void BufferUniformData();
 };
 
 class DrawObject3D {
   public:
+    DrawObject3D(std::vector<Vertex3>& vertices, std::vector<std::uint32_t>& indices);
+    virtual void Draw();
+
+  protected:
     std::vector<Vertex3> vertices;
     std::vector<std::uint32_t> indices;
 
-  private:
+    std::unique_ptr<Buffer> vertexBuffers_;
+    std::unique_ptr<Buffer> indexBuffers_;
+
+    std::vector<std::unique_ptr<Buffer>> uniformBuffers_;
+    std::vector<std::unique_ptr<Buffer>> deviceUniformBuffers_;
+
+    virtual void CreateVertexAndIndexBuffer();
+    virtual void CreateUniformBuffer();
+    virtual void BufferVertexAndIndexData();
+    virtual void BufferUniformData();
 };
 } // namespace Vklib
 
