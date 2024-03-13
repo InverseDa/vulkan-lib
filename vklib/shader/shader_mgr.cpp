@@ -1,6 +1,8 @@
 #include "shader_mgr.hpp"
 
 namespace Vklib {
+std::unique_ptr<ShaderMgr> ShaderMgr::instance_ = nullptr;
+
 std::vector<vk::VertexInputAttributeDescription> ShaderMgr::GetVertex3AttributeDescription() {
     std::vector<vk::VertexInputAttributeDescription> descriptions(3);
     // position
@@ -57,6 +59,20 @@ std::vector<vk::VertexInputBindingDescription> ShaderMgr::GetVertex2BindingDescr
         .setStride(sizeof(Vertex2))
         .setInputRate(vk::VertexInputRate::eVertex);
     return descriptions;
+}
+
+ShaderMgr::ShaderMgr() {
+    shaders_ = std::unordered_map<std::string, std::shared_ptr<Shader>>();
+}
+
+ShaderMgr::~ShaderMgr() {
+    for (auto& shader : shaders_) {
+        shader.second.reset();
+    }
+}
+
+void ShaderMgr::Load(const std::string& name, const std::vector<char>& vertexSource, const std::vector<char>& fragSource) {
+    shaders_[name] = std::make_shared<Shader>(vertexSource, fragSource);
 }
 
 } // namespace Vklib

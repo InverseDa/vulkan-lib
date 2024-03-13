@@ -31,7 +31,8 @@ DescriptorSetMgr::~DescriptorSetMgr() {
 }
 
 std::vector<DescriptorSetMgr::SetInfo> DescriptorSetMgr::AllocateBufferSets(uint32_t num) {
-    std::vector<vk::DescriptorSetLayout> layouts(maxFlight_, Context::GetInstance().shader->GetDescriptorSetLayouts()[0]);
+    auto& shaderMgr = ShaderMgr::GetInstance();
+    std::vector<vk::DescriptorSetLayout> layouts(maxFlight_, shaderMgr.Get("default")->GetDescriptorSetLayouts()[0]);
     vk::DescriptorSetAllocateInfo allocateInfo;
     allocateInfo
         .setDescriptorPool(bufferSetPool_.pool_)
@@ -50,7 +51,8 @@ std::vector<DescriptorSetMgr::SetInfo> DescriptorSetMgr::AllocateBufferSets(uint
 }
 
 DescriptorSetMgr::SetInfo DescriptorSetMgr::AllocateImageSet() {
-    std::vector<vk::DescriptorSetLayout> layouts(maxFlight_, Context::GetInstance().shader->GetDescriptorSetLayouts()[1]);
+    auto& shaderMgr = ShaderMgr::GetInstance();
+    std::vector<vk::DescriptorSetLayout> layouts(maxFlight_, shaderMgr.Get("default")->GetDescriptorSetLayouts()[1]);
     vk::DescriptorSetAllocateInfo allocateInfo;
     auto& poolInfo = GetAvailableImagePoolInfo();
     allocateInfo

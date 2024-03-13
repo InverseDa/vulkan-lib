@@ -28,10 +28,11 @@ void RenderProcess::CreateRenderPass() {
 }
 
 vk::PipelineLayout RenderProcess::CreateLayout() {
+    auto& shaderMgr = ShaderMgr::GetInstance();
     vk::PipelineLayoutCreateInfo createInfo;
-    auto range = Context::GetInstance().shader->GetPushConstantRange();
+    auto range = shaderMgr.Get("default")->GetPushConstantRange();
     createInfo
-        .setSetLayouts(Context::GetInstance().shader->GetDescriptorSetLayouts())
+        .setSetLayouts(shaderMgr.Get("default")->GetDescriptorSetLayouts())
         .setPushConstantRanges(range);
 
     return Context::GetInstance().device.createPipelineLayout(createInfo);

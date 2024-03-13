@@ -43,7 +43,7 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
 }
 
 Context::~Context() {
-    shader.reset();
+    ShaderMgr::Quit();
     device.destroySampler(sampler);
     commandMgr.reset();
     renderProcess.reset();
@@ -127,7 +127,7 @@ void Context::InitSwapchain(int windowWidth, int windowHeight) {
 }
 
 void Context::InitGraphicsPipeline() {
-    renderProcess->CreateGraphicsPipeline(*shader);
+    renderProcess->CreateGraphicsPipeline(*ShaderMgr::GetInstance().Get("default"));
 }
 
 void Context::InitCommandPool() {
@@ -135,11 +135,13 @@ void Context::InitCommandPool() {
 }
 
 void Context::InitShaderModules() {
+    auto& shaderMgr = ShaderMgr::GetInstance();
     auto vertexSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/frag.spv"));
     auto fragSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/vert.spv"));
-    shader = std::make_unique<Shader>(vertexSource, fragSource);
-    shader->SetPushConstantRange(0, sizeof(mat4), vk::ShaderStageFlagBits::eVertex);
-    shader->SetPushConstantRange(sizeof(mat4), sizeof(Color), vk::ShaderStageFlagBits::eFragment);
+
+    shaderMgr.Load("default", vertexSource, fragSource);
+    shaderMgr.Get("default")->SetPushConstantRange(0, sizeof(mat4), vk::ShaderStageFlagBits::eVertex);
+    shaderMgr.Get("default")->SetPushConstantRange(sizeof(mat4), sizeof(Color), vk::ShaderStageFlagBits::eFragment);
 }
 
 void Context::InitSampler() {

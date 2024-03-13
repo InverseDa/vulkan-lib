@@ -13,6 +13,7 @@
 #include "render/renderer.hpp"
 #include "cmd/command_mgr.hpp"
 #include "shader/shader.hpp"
+#include "shader/shader_mgr.hpp"
 
 namespace Vklib {
 class Context final {
@@ -43,7 +44,7 @@ class Context final {
     std::unique_ptr<Swapchain> swapchain;
     std::unique_ptr<RenderProcess> renderProcess;
     std::unique_ptr<CommandMgr> commandMgr;
-    std::unique_ptr<Shader> shader;
+//    std::unique_ptr<Shader> shader;
     vk::Sampler sampler;
 
     void ResizeSwapchainImage(int w, int h) {
