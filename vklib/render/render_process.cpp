@@ -1,6 +1,6 @@
 #include "render_process.hpp"
 #include "core/context.hpp"
-#include "math/vec2.hpp"
+#include "shader/shader_mgr.hpp"
 
 namespace Vklib {
 
@@ -55,8 +55,8 @@ vk::Pipeline RenderProcess::InternalCreateGraphicsPipeline(const Shader& shader,
 
     // vertex input
     vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo;
-    auto attribute = Vec2::GetAttributeDescription();
-    auto binding = Vec2::GetBindingDescription();
+    auto attribute = ShaderMgr::GetVertex2AttributeDescription();
+    auto binding = ShaderMgr::GetVertex2BindingDescription();
     vertexInputStateCreateInfo
         .setVertexAttributeDescriptions(attribute)
         .setVertexBindingDescriptions(binding);

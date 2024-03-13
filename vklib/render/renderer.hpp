@@ -16,7 +16,7 @@ class Renderer final {
 
     // TODO: temporary draw rect, implement this function
     void DrawRect(const Rect&, Texture&);
-    void DrawLine(const Vec2& p1, const Vec2& p2);
+    void DrawLine(const float2& p1, const float2& p2);
 
     void SetDrawColor(const Color& color);
     void SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far);
@@ -36,8 +36,8 @@ class Renderer final {
     std::unique_ptr<Buffer> rectIndicesBuffer_;
     std::unique_ptr<Buffer> lineVerticesBuffer_;
 
-    Mat4 projectionMat_;
-    Mat4 viewMat_;
+    mat4 projectionMat_;
+    mat4 viewMat_;
 
     std::vector<std::unique_ptr<Buffer>> uniformBuffers_;
     std::vector<std::unique_ptr<Buffer>> deviceUniformBuffers_;
@@ -61,7 +61,7 @@ class Renderer final {
     void BufferRectVertexData();
     void BufferRectIndicesData();
 
-    void BufferLineData(const Vec2& p1, const Vec2& p2);
+    void BufferLineData(const float2& p1, const float2& p2);
 
     void BufferMVPData();
     void BufferData();

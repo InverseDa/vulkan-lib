@@ -49,17 +49,8 @@ void Shader::InitDescriptorSetLayouts() {
     layouts_.push_back(Context::GetInstance().device.createDescriptorSetLayout(createInfo));
 }
 
-std::vector<vk::PushConstantRange> Shader::GetPushConstantRange() const {
-    std::vector<vk::PushConstantRange> ranges(2);
-    ranges[0]
-        .setOffset(0)
-        .setSize(sizeof(Mat4))
-        .setStageFlags(vk::ShaderStageFlagBits::eVertex);
-    ranges[1]
-        .setOffset(sizeof(Mat4))
-        .setSize(sizeof(Color))
-        .setStageFlags(vk::ShaderStageFlagBits::eFragment);
-    return ranges;
+void Shader::SetPushConstantRange(uint32_t offset, uint32_t size, vk::ShaderStageFlags stage) {
+    ranges_.push_back(vk::PushConstantRange{stage, offset, size});
 }
 
 } // namespace Vklib

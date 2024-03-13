@@ -1,0 +1,27 @@
+@startuml
+
+class Shader {
+    +Shader(const std::vector<char>& fragCodeSrc, const std::vector<char>& vertCodeSrc);
+    +~Shader();
+    +vk::ShaderModule GetVertexModule() const { return vertexModule_; }
+    +vk::ShaderModule GetFragModule() const { return fragModule_; }
+    +const std::vector<vk::DescriptorSetLayout>& GetDescriptorSetLayouts() const { return layouts_; }
+    +std::vector<vk::PushConstantRange> GetPushConstantRange() const;
+
+    -vk::ShaderModule vertexModule_;
+    -vk::ShaderModule fragModule_;
+    -std::vector<vk::DescriptorSetLayout> layouts_;
+    -void InitDescriptorSetLayouts();
+}
+
+class ShaderMgr {
+    +ShaderMgr();
+    +~ShaderMgr();
+
+    -std::unordered_map<std::string, std::shared_ptr<Shader>> shaders_;
+    -std::shared_ptr<Shader> LoadShader(const std::string& name);
+    -std::shared_ptr<Shader> GetShader(const std::string& name);
+
+}
+
+@enduml

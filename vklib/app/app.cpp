@@ -74,7 +74,7 @@ int Application::Run() {
             renderer_->SetDrawColor(Color{0, 1, 0});
             renderer_->DrawRect(Rect{{500, 100}, Size{200, 300}}, *texture2);
             renderer_->SetDrawColor(Color{0, 0, 1});
-            renderer_->DrawLine(Vec2{0, 0}, Vec2{width_, height_});
+            renderer_->DrawLine(float2{0, 0}, float2{width_, height_});
             renderer_->EndRender();
         }
         DestroyVulkan();

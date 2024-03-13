@@ -138,6 +138,8 @@ void Context::InitShaderModules() {
     auto vertexSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/frag.spv"));
     auto fragSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/vert.spv"));
     shader = std::make_unique<Shader>(vertexSource, fragSource);
+    shader->SetPushConstantRange(0, sizeof(mat4), vk::ShaderStageFlagBits::eVertex);
+    shader->SetPushConstantRange(sizeof(mat4), sizeof(Color), vk::ShaderStageFlagBits::eFragment);
 }
 
 void Context::InitSampler() {

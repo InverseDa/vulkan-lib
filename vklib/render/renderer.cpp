@@ -1,6 +1,6 @@
 #include "renderer.hpp"
 #include "core/context.hpp"
-#include "math/vec2.hpp"
+#include "math/float2.hpp"
 #include "math/uniform.hpp"
 #include "mesh/vertex.hpp"
 
@@ -36,8 +36,8 @@ Renderer::~Renderer() {
 }
 
 void Renderer::InitMats() {
-    viewMat_ = Mat4::CreateIdentity();
-    projectionMat_ = Mat4::CreateIdentity();
+    viewMat_ = mat4::CreateIdentity();
+    projectionMat_ = mat4::CreateIdentity();
 }
 
 void Renderer::DrawRect(const Rect& rect, Texture& texture) {
@@ -58,13 +58,13 @@ void Renderer::DrawRect(const Rect& rect, Texture& texture) {
                            0,
                            {descriptorSets_[cur_Frame_].set, texture.set.set},
                            {});
-    auto model = Mat4::CreateTranslate(rect.position) * Mat4::CreateScale(rect.size);
-    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), model.GetData());
-    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eFragment, sizeof(Mat4), sizeof(Color), &drawColor_);
+    auto model = mat4::CreateTranslate(rect.position) * mat4::CreateScale(rect.size);
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(mat4), model.GetData());
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eFragment, sizeof(mat4), sizeof(Color), &drawColor_);
     cmd.drawIndexed(6, 1, 0, 0, 0);
 }
 
-void Renderer::DrawLine(const Vec2& p1, const Vec2& p2) {
+void Renderer::DrawLine(const float2& p1, const float2& p2) {
     auto& ctx = Context::GetInstance();
     auto& device = ctx.device;
     auto& cmd = cmdBufs_[cur_Frame_];
@@ -81,9 +81,9 @@ void Renderer::DrawLine(const Vec2& p1, const Vec2& p2) {
                            0,
                            {descriptorSets_[cur_Frame_].set, whiteTexture->set.set},
                            {});
-    auto model = Mat4::CreateIdentity();
-    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(Mat4), model.GetData());
-    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eFragment, sizeof(Mat4), sizeof(Color), &drawColor_);
+    auto model = mat4::CreateIdentity();
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(mat4), model.GetData());
+    cmd.pushConstants(layout, vk::ShaderStageFlagBits::eFragment, sizeof(mat4), sizeof(Color), &drawColor_);
     cmd.draw(2, 1, 0, 0);
 }
 
@@ -187,19 +187,19 @@ void Renderer::CreateCmdBuffers() {
 void Renderer::CreateBuffers() {
     auto& device = Context::GetInstance().device;
     rectVerticesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eVertexBuffer,
-                                         sizeof(Vertex) * 4,
+                                         sizeof(Vertex2) * 4,
                                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
     rectIndicesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eIndexBuffer,
                                         sizeof(uint32_t) * 6,
                                         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
     lineVerticesBuffer_.reset(new Buffer(vk::BufferUsageFlagBits::eVertexBuffer,
-                                         sizeof(Vertex) * 2,
+                                         sizeof(Vertex2) * 2,
                                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
 }
 
 void Renderer::CreateUniformBuffers(int flightCount) {
     uniformBuffers_.resize(flightCount);
-    size_t size = sizeof(Mat4) * 2;
+    size_t size = sizeof(mat4) * 2;
     for (auto& buffer : uniformBuffers_) {
         buffer.reset(new Buffer(vk::BufferUsageFlagBits::eTransferSrc,
                                 size,
@@ -230,7 +230,7 @@ void Renderer::BufferRectData() {
 }
 
 void Renderer::BufferRectVertexData() {
-    Vertex vertices[] = {
+    Vertex2 vertices[] = {
         {{-0.5, -0.5}, {0, 0}},
         {{0.5, -0.5}, {1, 0}},
         {{0.5, 0.5}, {1, 1}},
@@ -251,8 +251,8 @@ void Renderer::BufferRectIndicesData() {
     memcpy(rectIndicesBuffer_->map, indices, sizeof(indices));
 }
 
-void Renderer::BufferLineData(const Vec2& p1, const Vec2& p2) {
-    Vertex vertices[] = {
+void Renderer::BufferLineData(const float2& p1, const float2& p2) {
+    Vertex2 vertices[] = {
         {p1, {0, 0}},
         {p2, {0, 0}},
     };
@@ -261,13 +261,13 @@ void Renderer::BufferLineData(const Vec2& p1, const Vec2& p2) {
 
 void Renderer::BufferMVPData() {
     struct Matrices {
-        Mat4 view;
-        Mat4 projection;
+        mat4 view;
+        mat4 projection;
     } matrices;
     for (int i = 0; i < uniformBuffers_.size(); i++) {
         auto& buffer = uniformBuffers_[i];
-        memcpy(buffer->map, (void*)&projectionMat_, sizeof(Mat4));
-        memcpy(((float*)buffer->map + 4 * 4), (void*)&viewMat_, sizeof(Mat4));
+        memcpy(buffer->map, (void*)&projectionMat_, sizeof(mat4));
+        memcpy(((float*)buffer->map + 4 * 4), (void*)&viewMat_, sizeof(mat4));
         TransBuffer2Device(*buffer, *deviceUniformBuffers_[i], buffer->size, 0, 0);
     }
 }
@@ -283,7 +283,7 @@ void Renderer::UpdateDescriptorSets() {
         bufferInfo1
             .setBuffer(deviceUniformBuffers_[i]->buffer)
             .setOffset(0)
-            .setRange(sizeof(Mat4) * 2);
+            .setRange(sizeof(mat4) * 2);
 
         std::vector<vk::WriteDescriptorSet> writerInfos(1);
         writerInfos[0]
@@ -299,7 +299,7 @@ void Renderer::UpdateDescriptorSets() {
 }
 
 void Renderer::SetProjectionMatrix(int left, int right, int top, int bottom, int near, int far) {
-    projectionMat_ = Mat4::CreateOrtho(left, right, top, bottom, near, far);
+    projectionMat_ = mat4::CreateOrtho(left, right, top, bottom, near, far);
     BufferMVPData();
 }
 

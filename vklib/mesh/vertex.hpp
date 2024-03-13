@@ -3,11 +3,18 @@
 
 #include "vulkan/vulkan.hpp"
 
-#include "math/vec2.hpp"
+#include "math/float2.hpp"
+#include "math/float3.hpp"
 
-struct Vertex final {
-    Vec2 pos;
-    Vec2 texCoord;
+struct Vertex2 final {
+    float2 pos;
+    float2 texCoord;
+};
+
+struct Vertex3 final {
+    float3 position;
+    float3 normal;
+    float2 texCoord;
 };
 
 #endif // VULKAN_LIB_VERTEX_HPP
