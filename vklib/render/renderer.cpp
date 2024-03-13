@@ -260,10 +260,6 @@ void Renderer::BufferLineData(const float2& p1, const float2& p2) {
 }
 
 void Renderer::BufferMVPData() {
-    struct Matrices {
-        mat4 view;
-        mat4 projection;
-    } matrices;
     for (int i = 0; i < uniformBuffers_.size(); i++) {
         auto& buffer = uniformBuffers_[i];
         memcpy(buffer->map, (void*)&projectionMat_, sizeof(mat4));

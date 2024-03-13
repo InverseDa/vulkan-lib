@@ -64,7 +64,6 @@ class Renderer final {
     void BufferLineData(const float2& p1, const float2& p2);
 
     void BufferMVPData();
-    void BufferData();
     void UpdateDescriptorSets();
     void TransBuffer2Device(Buffer& src, Buffer& dst, size_t size, size_t srcOffset, size_t dstOffset);
     void CreateWhiteTexture();

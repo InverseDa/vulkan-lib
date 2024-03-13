@@ -27,7 +27,6 @@ class Application {
 
   private:
     static std::unique_ptr<Application> instance_;
-    std::unique_ptr<Vklib::Context> ctx_;
     std::unique_ptr<Vklib::Renderer> renderer_;
 
     std::string title_;
