@@ -33,7 +33,6 @@ class ShaderMgr final {
     static std::vector<vk::VertexInputBindingDescription> GetVertex2BindingDescription();
 
     void SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorType type, vk::ShaderStageFlags stage, int binding, int count);
-    void SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorSetLayoutBinding layoutBinding);
     void CreateDescriptorSetLayout(const std::string& setName);
     vk::DescriptorSetLayout GetDescriptorSetLayout(const std::string& setName) const { return descriptorSetLayouts.at(setName);};
 

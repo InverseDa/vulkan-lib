@@ -85,10 +85,6 @@ void ShaderMgr::Load(const std::string& name, const std::vector<char>& vertexSou
     shaders_[name] = std::make_shared<Shader>(vertexSource, fragSource);
 }
 
-void ShaderMgr::SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorSetLayoutBinding layoutBinding) {
-    descriptorSetLayoutBindings[setName][descriptorName] = layoutBinding;
-}
-
 void ShaderMgr::CreateDescriptorSetLayout(const std::string& setName) {
     if (descriptorSetLayouts.find(setName) != descriptorSetLayouts.end()) {
         return;
@@ -109,7 +105,7 @@ void ShaderMgr::SetDescriptorSetLayoutBinding(const std::string& setName, const 
         .setDescriptorCount(count)
         .setDescriptorType(type)
         .setStageFlags(stage);
-    SetDescriptorSetLayoutBinding(setName, descriptorName, layoutBinding);
+    descriptorSetLayoutBindings[setName][descriptorName] = layoutBinding;
 }
 
 } // namespace Vklib
