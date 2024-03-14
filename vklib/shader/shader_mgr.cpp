@@ -1,4 +1,5 @@
 #include "shader_mgr.hpp"
+#include "core/context.hpp"
 
 namespace Vklib {
 std::unique_ptr<ShaderMgr> ShaderMgr::instance_ = nullptr;
@@ -75,10 +76,40 @@ ShaderMgr::~ShaderMgr() {
     for (auto& shader : shaders_) {
         shader.second.reset();
     }
+    for (auto& [setName, layout] : descriptorSetLayouts) {
+        Context::GetInstance().device.destroyDescriptorSetLayout(layout);
+    }
 }
 
 void ShaderMgr::Load(const std::string& name, const std::vector<char>& vertexSource, const std::vector<char>& fragSource) {
     shaders_[name] = std::make_shared<Shader>(vertexSource, fragSource);
+}
+
+void ShaderMgr::SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorSetLayoutBinding layoutBinding) {
+    descriptorSetLayoutBindings[setName][descriptorName] = layoutBinding;
+}
+
+void ShaderMgr::CreateDescriptorSetLayout(const std::string& setName) {
+    if (descriptorSetLayouts.find(setName) != descriptorSetLayouts.end()) {
+        return;
+    }
+    vk::DescriptorSetLayoutCreateInfo createInfo;
+    std::vector<vk::DescriptorSetLayoutBinding> bindings;
+    for (auto& [descriptorName, layoutBinding] : descriptorSetLayoutBindings[setName]) {
+        bindings.push_back(layoutBinding);
+    }
+    createInfo.setBindings(bindings);
+    descriptorSetLayouts[setName] = Context::GetInstance().device.createDescriptorSetLayout(createInfo);
+    // TODO: 考虑是否要清空descriptorSetLayoutBindings[setName]
+}
+
+void ShaderMgr::SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorType type, vk::ShaderStageFlags stage, int binding, int count) {
+    vk::DescriptorSetLayoutBinding layoutBinding;
+    layoutBinding.setBinding(binding)
+        .setDescriptorCount(count)
+        .setDescriptorType(type)
+        .setStageFlags(stage);
+    SetDescriptorSetLayoutBinding(setName, descriptorName, layoutBinding);
 }
 
 } // namespace Vklib

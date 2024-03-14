@@ -38,13 +38,13 @@ void Texture::Init(void* pixels, uint32_t w, uint32_t h) {
 
     CreateImageView();
 
-    set = DescriptorSetMgr::GetInstance().AllocateImageSet();
+    info = DescriptorSetMgr::GetInstance().AllocateImageSet();
     UpdateDescriptorSet();
 }
 
 Texture::~Texture() {
     auto& device = Context::GetInstance().device;
-    DescriptorSetMgr::GetInstance().FreeImageSet(set);
+    DescriptorSetMgr::GetInstance().FreeImageSet(info);
     device.destroyImageView(view);
     device.freeMemory(memory);
     device.destroyImage(image);
@@ -78,65 +78,62 @@ void Texture::AllocateMemory() {
 }
 
 void Texture::TransformData2Image(Buffer& buffer, uint32_t w, uint32_t h) {
-    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue,
-                                                  [&](vk::CommandBuffer cmdBuf) {
-                                                      vk::BufferImageCopy region;
-                                                      vk::ImageSubresourceLayers subsource;
-                                                      subsource.setAspectMask(vk::ImageAspectFlagBits::eColor)
-                                                          .setBaseArrayLayer(0)
-                                                          .setMipLevel(0)
-                                                          .setLayerCount(1);
-                                                      region.setBufferImageHeight(0)
-                                                          .setBufferOffset(0)
-                                                          .setImageOffset(0)
-                                                          .setImageExtent({w, h, 1})
-                                                          .setBufferRowLength(0)
-                                                          .setImageSubresource(subsource);
-                                                      cmdBuf.copyBufferToImage(buffer.buffer, image, vk::ImageLayout::eTransferDstOptimal, region);
-                                                  });
+    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
+        vk::BufferImageCopy region;
+        vk::ImageSubresourceLayers subsource;
+        subsource.setAspectMask(vk::ImageAspectFlagBits::eColor)
+            .setBaseArrayLayer(0)
+            .setMipLevel(0)
+            .setLayerCount(1);
+        region.setBufferImageHeight(0)
+            .setBufferOffset(0)
+            .setImageOffset(0)
+            .setImageExtent({w, h, 1})
+            .setBufferRowLength(0)
+            .setImageSubresource(subsource);
+        cmdBuf.copyBufferToImage(buffer.buffer, image, vk::ImageLayout::eTransferDstOptimal, region);
+    });
 }
 
 void Texture::TransitionImageLayoutFromUndefine2Dst() {
-    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue,
-                                                  [&](vk::CommandBuffer cmdBuf) {
-                                                      vk::ImageMemoryBarrier barrier;
-                                                      vk::ImageSubresourceRange range;
-                                                      range.setLayerCount(1)
-                                                          .setBaseArrayLayer(0)
-                                                          .setLevelCount(1)
-                                                          .setBaseMipLevel(0)
-                                                          .setAspectMask(vk::ImageAspectFlagBits::eColor);
-                                                      barrier.setImage(image)
-                                                          .setOldLayout(vk::ImageLayout::eUndefined)
-                                                          .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
-                                                          .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                                                          .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                                                          .setDstAccessMask((vk::AccessFlagBits::eTransferWrite))
-                                                          .setSubresourceRange(range);
-                                                      cmdBuf.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, nullptr, barrier);
-                                                  });
+    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
+        vk::ImageMemoryBarrier barrier;
+        vk::ImageSubresourceRange range;
+        range.setLayerCount(1)
+            .setBaseArrayLayer(0)
+            .setLevelCount(1)
+            .setBaseMipLevel(0)
+            .setAspectMask(vk::ImageAspectFlagBits::eColor);
+        barrier.setImage(image)
+            .setOldLayout(vk::ImageLayout::eUndefined)
+            .setNewLayout(vk::ImageLayout::eTransferDstOptimal)
+            .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+            .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+            .setDstAccessMask((vk::AccessFlagBits::eTransferWrite))
+            .setSubresourceRange(range);
+        cmdBuf.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, nullptr, barrier);
+    });
 }
 
 void Texture::TransitionImageLayoutFromDst2Optimal() {
-    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue,
-                                                  [&](vk::CommandBuffer cmdBuf) {
-                                                      vk::ImageMemoryBarrier barrier;
-                                                      vk::ImageSubresourceRange range;
-                                                      range.setLayerCount(1)
-                                                          .setBaseArrayLayer(0)
-                                                          .setLevelCount(1)
-                                                          .setBaseMipLevel(0)
-                                                          .setAspectMask(vk::ImageAspectFlagBits::eColor);
-                                                      barrier.setImage(image)
-                                                          .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
-                                                          .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                                                          .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                                                          .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                                                          .setSrcAccessMask((vk::AccessFlagBits::eTransferWrite))
-                                                          .setDstAccessMask((vk::AccessFlagBits::eShaderRead))
-                                                          .setSubresourceRange(range);
-                                                      cmdBuf.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, nullptr, barrier);
-                                                  });
+    Context::GetInstance().commandMgr->ExecuteCmd(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
+        vk::ImageMemoryBarrier barrier;
+        vk::ImageSubresourceRange range;
+        range.setLayerCount(1)
+            .setBaseArrayLayer(0)
+            .setLevelCount(1)
+            .setBaseMipLevel(0)
+            .setAspectMask(vk::ImageAspectFlagBits::eColor);
+        barrier.setImage(image)
+            .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
+            .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+            .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+            .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+            .setSrcAccessMask((vk::AccessFlagBits::eTransferWrite))
+            .setDstAccessMask((vk::AccessFlagBits::eShaderRead))
+            .setSubresourceRange(range);
+        cmdBuf.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, nullptr, barrier);
+    });
 }
 
 void Texture::CreateImageView() {
@@ -167,7 +164,7 @@ void Texture::UpdateDescriptorSet() {
         .setImageInfo(imageInfo)
         .setDstBinding(0)
         .setDstArrayElement(0)
-        .setDstSet(set.set)
+        .setDstSet(info.set)
         .setDescriptorCount(1)
         .setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
     Context::GetInstance().device.updateDescriptorSets(writer, {});

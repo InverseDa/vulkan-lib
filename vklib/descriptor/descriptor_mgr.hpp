@@ -28,7 +28,7 @@ class DescriptorSetMgr final {
     DescriptorSetMgr(uint32_t maxFlight);
     ~DescriptorSetMgr();
 
-    std::vector<SetInfo> AllocateBufferSets(uint32_t num);
+    std::vector<SetInfo> AllocateBufferSets(uint32_t num, std::string setName);
     SetInfo AllocateImageSet();
 
     void FreeImageSet(const SetInfo&);

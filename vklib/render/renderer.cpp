@@ -14,7 +14,7 @@ Renderer::Renderer(int maxFlightCount) : cur_Frame_(0) {
     CreateCmdBuffers();
     CreateBuffers();
     CreateUniformBuffers(maxFlightCount);
-    descriptorSets_ = DescriptorSetMgr::GetInstance().AllocateBufferSets(maxFlightCount);
+    descriptorSets_ = DescriptorSetMgr::GetInstance().AllocateBufferSets(maxFlightCount, "set1");
     UpdateDescriptorSets();
     InitMats();
     CreateWhiteTexture();
@@ -58,7 +58,7 @@ void Renderer::DrawRect(const Rect& rect, Texture& texture) {
     cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                            layout,
                            0,
-                           {descriptorSets_[cur_Frame_].set, texture.set.set},
+                           {descriptorSets_[cur_Frame_].set, texture.info.set},
                            {});
     auto model = mat4::CreateTranslate(rect.position) * mat4::CreateScale(rect.size);
     cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(mat4), model.GetData());
@@ -81,7 +81,7 @@ void Renderer::DrawLine(const float2& p1, const float2& p2) {
     cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                            layout,
                            0,
-                           {descriptorSets_[cur_Frame_].set, whiteTexture->set.set},
+                           {descriptorSets_[cur_Frame_].set, whiteTexture->info.set},
                            {});
     auto model = mat4::CreateIdentity();
     cmd.pushConstants(layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(mat4), model.GetData());

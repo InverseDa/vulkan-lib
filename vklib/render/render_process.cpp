@@ -31,8 +31,11 @@ vk::PipelineLayout RenderProcess::CreateLayout() {
     auto& shaderMgr = ShaderMgr::GetInstance();
     vk::PipelineLayoutCreateInfo createInfo;
     auto range = shaderMgr.Get("default")->GetPushConstantRange();
+    auto setLayout1 = shaderMgr.GetDescriptorSetLayout("set1");
+    auto setLayout2 = shaderMgr.GetDescriptorSetLayout("set2");
+    auto sets = std::vector{setLayout1, setLayout2};
     createInfo
-        .setSetLayouts(shaderMgr.Get("default")->GetDescriptorSetLayouts())
+        .setSetLayouts(sets)
         .setPushConstantRanges(range);
 
     return Context::GetInstance().device.createPipelineLayout(createInfo);

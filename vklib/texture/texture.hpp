@@ -16,7 +16,7 @@ class Texture final {
     vk::Image image;
     vk::DeviceMemory memory;
     vk::ImageView view;
-    DescriptorSetMgr::SetInfo set;
+    DescriptorSetMgr::SetInfo info;
 
   private:
     Texture(std::string_view filename);

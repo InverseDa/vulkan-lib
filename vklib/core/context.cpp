@@ -136,12 +136,26 @@ void Context::InitCommandPool() {
 
 void Context::InitShaderModules() {
     auto& shaderMgr = ShaderMgr::GetInstance();
-    auto vertexSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/frag.spv"));
-    auto fragSource = ReadWholeFile(GetTestsPath("vkFirstTest/shaders/vert.spv"));
+    auto vertexSource = ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/frag.spv"));
+    auto fragSource = ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/vert.spv"));
 
     shaderMgr.Load("default", vertexSource, fragSource);
     shaderMgr.Get("default")->SetPushConstantRange(0, sizeof(mat4), vk::ShaderStageFlagBits::eVertex);
     shaderMgr.Get("default")->SetPushConstantRange(sizeof(mat4), sizeof(Color), vk::ShaderStageFlagBits::eFragment);
+    shaderMgr.SetDescriptorSetLayoutBinding("set1",
+                                            "MVP",
+                                            vk::DescriptorType::eUniformBuffer,
+                                            vk::ShaderStageFlagBits::eVertex,
+                                            0,
+                                            1);
+    shaderMgr.SetDescriptorSetLayoutBinding("set2",
+                                            "texSampler",
+                                            vk::DescriptorType::eCombinedImageSampler,
+                                            vk::ShaderStageFlagBits::eFragment,
+                                            0,
+                                            1);
+    shaderMgr.CreateDescriptorSetLayout("set1");
+    shaderMgr.CreateDescriptorSetLayout("set2");
 }
 
 void Context::InitSampler() {

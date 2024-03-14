@@ -32,12 +32,21 @@ class ShaderMgr final {
     static std::vector<vk::VertexInputAttributeDescription> GetVertex2AttributeDescription();
     static std::vector<vk::VertexInputBindingDescription> GetVertex2BindingDescription();
 
+    void SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorType type, vk::ShaderStageFlags stage, int binding, int count);
+    void SetDescriptorSetLayoutBinding(const std::string& setName, const std::string& descriptorName, vk::DescriptorSetLayoutBinding layoutBinding);
+    void CreateDescriptorSetLayout(const std::string& setName);
+    vk::DescriptorSetLayout GetDescriptorSetLayout(const std::string& setName) const { return descriptorSetLayouts.at(setName);};
+
+
     ~ShaderMgr();
 
   private:
-    ShaderMgr();
-
     static std::unique_ptr<ShaderMgr> instance_;
+    std::unordered_map<std::string, vk::DescriptorSetLayout> descriptorSetLayouts;
+    // setname -> descriptorname -> layoutbinding
+    std::unordered_map<std::string, std::unordered_map<std::string, vk::DescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
+
+    ShaderMgr();
 };
 } // namespace Vklib
 
