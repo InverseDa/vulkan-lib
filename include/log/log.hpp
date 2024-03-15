@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <format>
+#include "fmt/core.h"
 
 enum LOG_LEVEL {
     LOG_LEVEL_INFO,
@@ -12,26 +13,27 @@ enum LOG_LEVEL {
 
 namespace IO {
 template <typename... Args>
-inline void PrintLog(LOG_LEVEL level, const std::format_string<Args...>& fmt, Args&&... args) {
+inline void PrintLog(LOG_LEVEL level, const fmt::format_string<Args...>& fmt, Args&&... args) {
     switch (level) {
     case LOG_LEVEL_INFO:
-        std::cout << "[INFO] ";
+        fmt::print("[INFO] ");
         break;
     case LOG_LEVEL_WARNING:
-        std::cout << "[WARNING] ";
+        fmt::print("[WARNING] ");
         break;
     case LOG_LEVEL_ERROR:
-        std::cout << "[ERROR] ";
+        fmt::print("[ERROR] ");
         break;
     }
-    std::cout << std::format(fmt, std::forward<Args>(args)...) << std::endl;
+    fmt::print(fmt, std::forward<Args>(args)...);
+    fmt::print("\n");
 }
 
 template <typename... Args>
-inline void ThrowError(const std::format_string<Args...>& fmt, Args&&... args) {
-    auto msg = std::format(fmt, std::forward<Args>(args)...);
+inline void ThrowError(const fmt::format_string<Args...>& fmt, Args&&... args) {
+    auto msg = fmt::format(fmt, std::forward<Args>(args)...);
     msg = "[ERROR] " + msg;
-    std::cout << msg << std::endl;
+    fmt::print("{}\n", msg);
     throw std::runtime_error(msg);
 }
 

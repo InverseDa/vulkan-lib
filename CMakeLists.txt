@@ -29,13 +29,14 @@ endforeach ()
 add_library(vulkan_lib STATIC ${VKLIB_SRCS})
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/vklib)
-target_include_directories(vulkan_lib PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/include)
+include_directories(${PROJECT_SOURCE_DIR}/vklib)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/include)
 
 target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
 target_link_libraries(vulkan_lib PRIVATE glfw)
 target_link_libraries(vulkan_lib PUBLIC SDL2)
+# for debug
+target_link_libraries(vulkan_lib PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/lib/fmtd.lib)
 
 file(GLOB TEST_PROJECTS RELATIVE ${PROJECT_SOURCE_DIR}/tests ${PROJECT_SOURCE_DIR}/tests/*)
 foreach (TEST_PROJECT ${TEST_PROJECTS})
