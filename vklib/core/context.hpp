@@ -9,17 +9,12 @@
 
 #include "tools.hpp"
 #include "swapchain/swapchain.hpp"
-#include "render/render_process.hpp"
 #include "render/renderer.hpp"
-#include "cmd/command_mgr.hpp"
-#include "shader/shader.hpp"
-#include "shader/shader_mgr.hpp"
+#include "command/command.hpp"
 
-namespace Vklib {
+namespace ida {
 class Context final {
   public:
-    using GetSurfaceCallback = std::function<vk::SurfaceKHR(vk::Instance)>;
-
     static void Init(std::vector<const char*>& extensions, GetSurfaceCallback);
     static void Quit();
 
@@ -41,23 +36,13 @@ class Context final {
     vk::Device device;
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
-    std::unique_ptr<Swapchain> swapchain;
-    std::unique_ptr<RenderProcess> renderProcess;
+    std::unique_ptr<IdaSwapChain> swapChain;
     std::unique_ptr<CommandMgr> commandMgr;
-//    std::unique_ptr<Shader> shader;
     vk::Sampler sampler;
 
-    void ResizeSwapchainImage(int w, int h) {
-        auto& ctx = Context::GetInstance();
-        ctx.device.waitIdle();
-
-        ctx.swapchain.reset();
-        ctx.GetSurface();
-        ctx.InitSwapchain(w, h);
-        ctx.swapchain->InitFramebuffers();
-    }
-
     ~Context();
+
+    friend class IdaWindow;
 
   private:
     static Context* instance_;
@@ -68,7 +53,7 @@ class Context final {
     Context(std::vector<const char*>& extensions, GetSurfaceCallback);
 
     void InitRenderProcess();
-    void InitSwapchain(int windowWidth, int windowHeight);
+    void InitSwapChain(int windowWidth, int windowHeight);
     void InitGraphicsPipeline();
     void InitCommandPool();
     void InitShaderModules();
@@ -81,6 +66,6 @@ class Context final {
 
     void QueryQueueInfo(vk::SurfaceKHR);
 };
-} // namespace Vklib
+} // namespace ida
 
 #endif // VULKAN_LIB_CONTEXT_HPP

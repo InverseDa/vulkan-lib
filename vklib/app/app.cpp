@@ -1,90 +1,76 @@
 #include "app.hpp"
 #include "core/context.hpp"
+#include "swapchain/swapchain.hpp"
+#include "global_info.hpp"
+
+#include "system/simple_render_system.hpp"
 
 std::unique_ptr<Application> Application::instance_ = nullptr;
 
-Application::Application(const std::string& title, float width, float height) : title_(title), width_(width), height_(height) {
-    SDL_Init(SDL_INIT_EVERYTHING);
-    window_ = SDL_CreateWindow(title_.c_str(),
-                               SDL_WINDOWPOS_CENTERED,
-                               SDL_WINDOWPOS_CENTERED,
-                               width,
-                               height,
-                               SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-    if (window_ == nullptr) {
-        SDL_Log("Create window failed, ERROR MSG: %s", SDL_GetError());
-        IO::ThrowError("SDL Can't create window");
-    }
-    unsigned int count;
-    SDL_Vulkan_GetInstanceExtensions(window_, &count, nullptr);
-    std::vector<const char*> extensions(count);
-    SDL_Vulkan_GetInstanceExtensions(window_, &count, extensions.data());
+Application::Application(const std::string& title, int width, int height) {
+    InitVulkan(window_->extensions, window_->getSurfaceCallback, width, height);
 
-    InitVulkan(extensions, [&](vk::Instance instance) {
-        VkSurfaceKHR surface;
-        if (!SDL_Vulkan_CreateSurface(window_, instance, &surface)) {
-            IO::ThrowError("SDL Can't create surface");
-        }
-        return surface; }, width, height);
+    // Init global descriptor pool
+    globalPool = ida::IdaDescriptorPool::Builder()
+                     .SetMaxSets(ida::IdaSwapChain::MAX_FRAMES_IN_FLIGHT)
+                     .AddPoolSize(vk::DescriptorType::eUniformBuffer, ida::IdaSwapChain::MAX_FRAMES_IN_FLIGHT)
+                     .Build();
 }
 
-void Application::InitVulkan(std::vector<const char*>& extensions, Vklib::Context::GetSurfaceCallback cb, int windowWidth, int windowHeight) {
-    Vklib::Context::Init(extensions, cb);
-    Vklib::Context::GetInstance().InitVulkan(windowWidth, windowHeight);
+void Application::InitVulkan(std::vector<const char*>& extensions, GetSurfaceCallback cb, int windowWidth, int windowHeight) {
+    ida::Context::Init(extensions, cb);
+    ida::Context::GetInstance().InitVulkan(windowWidth, windowHeight);
 
-    int maxFlightCount = 2;
-    Vklib::DescriptorSetMgr::Init(maxFlightCount);
-    renderer_ = std::make_unique<Vklib::Renderer>(maxFlightCount);
-    renderer_->SetProjectionMatrix(0, windowWidth, windowHeight, 0, 1, -1);
+    renderer_ = std::make_unique<ida::IdaRenderer>();
 }
 
 void Application::DestroyVulkan() {
-    Vklib::Context::GetInstance().device.waitIdle();
+    ida::Context::GetInstance().device.waitIdle();
     renderer_.reset();
-    Vklib::TextureMgr::GetInstance().Clear();
-    Vklib::DescriptorSetMgr::Quit();
-    Vklib::Context::Quit();
+    //    ida::TextureMgr::GetInstance().Clear();
+    //    ida::DescriptorSetMgr::Quit();
+    ida::Context::Quit();
 }
 
-Application::~Application() {
-    SDL_Quit();
-    SDL_DestroyWindow(window_);
-    SDL_Quit();
-}
+Application::~Application() {}
 
 int Application::Run() {
-    try {
-        float x = 100, y = 100;
-        Vklib::Texture* texture1 = Vklib::TextureMgr::GetInstance().Load(GetTestsPath("vkFirstTest/assets/texture.jpg"));
-        Vklib::Texture* texture2 = Vklib::TextureMgr::GetInstance().Load(GetTestsPath("vkFirstTest/assets/role.png"));
-        while (!shouldClose) {
-            while (SDL_PollEvent(&event_)) {
-                if (event_.type == SDL_QUIT) {
-                    shouldClose = true;
-                }
-                if(event_.type == SDL_WINDOWEVENT) {
-                    if(event_.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                        Vklib::Context::GetInstance().ResizeSwapchainImage(event_.window.data1, event_.window.data2);
-                    }
-                }
-            }
-            renderer_->StartRender();
-            renderer_->SetDrawColor(Color{1, 0, 0});
-            renderer_->DrawRect(Rect{{x, y}, Size{200, 300}}, *texture1);
-            renderer_->SetDrawColor(Color{0, 1, 0});
-            renderer_->DrawRect(Rect{{500, 100}, Size{200, 300}}, *texture2);
-            renderer_->SetDrawColor(Color{0, 0, 1});
-            renderer_->DrawLine(float2{0, 0}, float2{width_, height_});
-            renderer_->EndRender();
-        }
-        DestroyVulkan();
-        Vklib::TextureMgr::GetInstance().Destroy(texture1);
-        Vklib::TextureMgr::GetInstance().Destroy(texture2);
-    } catch (const std::exception& e) {
-        IO::PrintLog(LOG_LEVEL_ERROR, "Catch Exception: {}", e.what());
-        return -1;
+    std::vector<std::unique_ptr<ida::IdaBuffer>> uboBuffers(ida::IdaSwapChain::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < uboBuffers.size(); i++) {
+        uboBuffers[i] = std::make_unique<ida::IdaBuffer>(
+            sizeof(ida::GlobalUbo),
+            1,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible);
+        uboBuffers[i]->Map();
     }
+    auto globalSetLayout = ida::IdaDescriptorSetLayout::Builder()
+                               .AddBinding(0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eAllGraphics)
+                               .Build();
+    std::vector<vk::DescriptorSet> globalDescriptorSets(ida::IdaSwapChain::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < globalDescriptorSets.size(); i++) {
+        auto bufferInfo = uboBuffers[i]->GetDescriptorInfo();
+        ida::IdaDescriptorWriter(*globalSetLayout, *globalPool)
+            .WriteBuffer(0, &bufferInfo)
+            .Build(globalDescriptorSets[i]);
+    }
+
+    // TODO: add a simple render system
+    //    ida::SimpleRenderSystem simpleRenderSystem{
+    //
+    //    };
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    window_->Run([&]() {
+        auto newTime = std::chrono::high_resolution_clock::now();
+        float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+        currentTime = newTime;
+
+        renderer_->StartRender();
+
+        renderer_->EndRender();
+    });
+
+    DestroyVulkan();
     return 0;
 }
-
-

@@ -2,7 +2,7 @@
 #include "log/log.hpp"
 #include "tools.hpp"
 
-namespace Vklib {
+namespace ida {
 Context* Context::instance_ = nullptr;
 
 void Context::Init(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
@@ -43,11 +43,11 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
 }
 
 Context::~Context() {
-    ShaderMgr::Quit();
+//    ShaderMgr::Quit();
     device.destroySampler(sampler);
     commandMgr.reset();
     renderProcess.reset();
-    swapchain.reset();
+    swapChain.reset();
     device.destroy();
     instance.destroy();
 }
@@ -119,15 +119,15 @@ void Context::QueryQueueInfo(vk::SurfaceKHR surface) {
 }
 
 void Context::InitRenderProcess() {
-    renderProcess = std::make_unique<RenderProcess>();
+//    renderProcess = std::make_unique<RenderProcess>();
 }
 
-void Context::InitSwapchain(int windowWidth, int windowHeight) {
-    swapchain = std::make_unique<Swapchain>(surface_, windowWidth, windowHeight);
+void Context::InitSwapChain(int windowWidth, int windowHeight) {
+    swapChain = std::make_unique<IdaSwapChain>(surface_, windowWidth, windowHeight);
 }
 
 void Context::InitGraphicsPipeline() {
-    renderProcess->CreateGraphicsPipeline(*ShaderMgr::GetInstance().Get("default"));
+//    renderProcess->CreateGraphicsPipeline(*ShaderMgr::GetInstance().Get("default"));
 }
 
 void Context::InitCommandPool() {
@@ -135,42 +135,22 @@ void Context::InitCommandPool() {
 }
 
 void Context::InitShaderModules() {
-    auto& shaderMgr = ShaderMgr::GetInstance();
     auto vertexSource = ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/frag.spv"));
     auto fragSource = ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/vert.spv"));
-
-    shaderMgr.Load("default", vertexSource, fragSource);
-    shaderMgr.Get("default")->SetPushConstantRange(0, sizeof(mat4), vk::ShaderStageFlagBits::eVertex);
-    shaderMgr.Get("default")->SetPushConstantRange(sizeof(mat4), sizeof(Color), vk::ShaderStageFlagBits::eFragment);
-    shaderMgr.SetDescriptorSetLayoutBinding("set1",
-                                            "MVP",
-                                            vk::DescriptorType::eUniformBuffer,
-                                            vk::ShaderStageFlagBits::eVertex,
-                                            0,
-                                            1);
-    shaderMgr.SetDescriptorSetLayoutBinding("set2",
-                                            "texSampler",
-                                            vk::DescriptorType::eCombinedImageSampler,
-                                            vk::ShaderStageFlagBits::eFragment,
-                                            0,
-                                            1);
-    shaderMgr.CreateDescriptorSetLayout("set1");
-    shaderMgr.CreateDescriptorSetLayout("set2");
 }
 
 void Context::InitSampler() {
-    vk::SamplerCreateInfo createInfo;
-    createInfo
-        .setMagFilter(vk::Filter::eLinear)
-        .setMinFilter(vk::Filter::eLinear)
-        .setAddressModeU(vk::SamplerAddressMode::eRepeat)
-        .setAddressModeV(vk::SamplerAddressMode::eRepeat)
-        .setAddressModeW(vk::SamplerAddressMode::eRepeat)
-        .setAnisotropyEnable(false)
-        .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
-        .setUnnormalizedCoordinates(false)
-        .setCompareEnable(false)
-        .setMipmapMode(vk::SamplerMipmapMode::eLinear);
+    auto createInfo = vk::SamplerCreateInfo()
+                          .setMagFilter(vk::Filter::eLinear)
+                          .setMinFilter(vk::Filter::eLinear)
+                          .setAddressModeU(vk::SamplerAddressMode::eRepeat)
+                          .setAddressModeV(vk::SamplerAddressMode::eRepeat)
+                          .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+                          .setAnisotropyEnable(false)
+                          .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
+                          .setUnnormalizedCoordinates(false)
+                          .setCompareEnable(false)
+                          .setMipmapMode(vk::SamplerMipmapMode::eLinear);
     sampler = Context::GetInstance().device.createSampler(createInfo);
 }
 
@@ -182,13 +162,13 @@ void Context::GetSurface() {
 }
 
 void Context::InitVulkan(int windowWidth, int windowHeight) {
-    InitSwapchain(windowWidth, windowHeight);
+    InitSwapChain(windowWidth, windowHeight);
     InitShaderModules();
     InitRenderProcess();
     InitGraphicsPipeline();
-    swapchain->InitFramebuffers();
+    swapChain->InitFramebuffers();
     InitCommandPool();
     InitSampler();
 }
 
-} // namespace Vklib
+} // namespace ida

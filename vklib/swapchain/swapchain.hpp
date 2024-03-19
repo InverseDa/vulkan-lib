@@ -3,43 +3,69 @@
 
 #include "vulkan/vulkan.hpp"
 
-namespace Vklib {
-class Swapchain final {
+namespace ida {
+class IdaSwapChain final {
   public:
-    struct Image {
-        vk::Image image;
-        vk::ImageView view;
-    };
+    static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
-    vk::SurfaceKHR surface = nullptr;
-    vk::SwapchainKHR swapchain = nullptr;
-    std::vector<Image> images;
-    std::vector<vk::Framebuffer> framebuffers;
+    IdaSwapChain(vk::Extent2D windowExtent);
+    IdaSwapChain(vk::Extent2D windowExtent, std::shared_ptr<IdaSwapChain> previous);
+    ~IdaSwapChain();
+    IdaSwapChain(const IdaSwapChain&) = delete;
+    IdaSwapChain& operator=(const IdaSwapChain&) = delete;
 
-    [[nodiscard]] const auto& GetExtent() const { return surfaceInfo_.extent; }
-    [[nodiscard]] const auto& GetFormat() const { return surfaceInfo_.format; }
+    vk::Framebuffer GetFrameBuffer(int index) { return swapChainFramebuffers_[index]; }
+    vk::RenderPass GetRenderPass() { return renderPass_; }
+    vk::ImageView GetImageView(int index) { return swapChainImageViews_[index]; }
+    size_t GetImageCount() { return swapChainImages_.size(); }
+    vk::Format GetSwapChainImageFormat() { return swapChainImageFormat_; }
+    vk::Extent2D GetSwapChainExtent() { return swapChainExtent_; }
+    uint32_t GetWidth() { return swapChainExtent_.width; }
+    uint32_t GetHeight() { return swapChainExtent_.height; }
+    float ExtentAspectRatio() { return static_cast<float>(swapChainExtent_.width) / static_cast<float>(swapChainExtent_.height); }
 
-    Swapchain(vk::SurfaceKHR, int windowWidth, int windowHeight);
-    ~Swapchain();
+    vk::Format FindDepthFormat();
+    vk::Result AcquireNextImageIndex(uint32_t& imageIndex);
+    vk::Result SubmitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
-    void InitFramebuffers();
+    bool CompareSwapFormats(const IdaSwapChain& other) const {
+        return swapChainImageFormat_ == other.swapChainImageFormat_ &&
+               swapChainDepthFormat_ == other.swapChainDepthFormat_;
+    }
 
   private:
-    struct SwapchainInfo {
-        vk::SurfaceFormatKHR format;
-        vk::Extent2D extent;
-        std::uint32_t count;
-        vk::SurfaceTransformFlagBitsKHR transform;
-    } surfaceInfo_;
-
-    vk::SwapchainKHR CreateSwapchain();
-
-    void QuerySurfaceInfo(int windowWidth, int windowHeight);
-    vk::SurfaceFormatKHR QuerySurfaceFormat();
-    vk::Extent2D QuerySurfaceExtent(const vk::SurfaceCapabilitiesKHR& capability, int windowWidth, int windowHeight);
-    void CreateImageAndViews();
+    void Init();
+    void CreateSwapChain();
+    void CreateImageViews();
+    void CreateDepthResources();
+    void CreateRenderPass();
     void CreateFramebuffers();
+    void CreateSyncObjects();
+
+    vk::Format swapChainImageFormat_;
+    vk::Format swapChainDepthFormat_;
+    vk::Extent2D swapChainExtent_;
+
+    std::vector<vk::Framebuffer> swapChainFramebuffers_;
+    vk::RenderPass renderPass_;
+
+    std::vector<vk::Image> depthImages_;
+    std::vector<vk::DeviceMemory> depthImageMemories_;
+    std::vector<vk::ImageView> depthImageViews_;
+    std::vector<vk::Image> swapChainImages_;
+    std::vector<vk::ImageView> swapChainImageViews_;
+
+    vk::Extent2D windowExtent_;
+
+    vk::SwapchainKHR swapChain_;
+    std::shared_ptr<IdaSwapChain> oldSwapChain_;
+
+    std::vector<vk::Semaphore> imageAvailableSemaphores_;
+    std::vector<vk::Semaphore> renderFinishedSemaphores_;
+    std::vector<vk::Fence> inFlightFences_;
+    std::vector<vk::Fence> imagesInFlight_;
+    size_t currentFrame = 0;
 };
-} // namespace Vklib
+} // namespace ida
 
 #endif // VULKAN_LIB_SWAPCHAIN_HPP
