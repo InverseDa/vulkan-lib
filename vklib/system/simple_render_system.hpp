@@ -20,7 +20,7 @@ class SimpleRenderSystem {
     void CreatePipelineLayout(vk::DescriptorSetLayout globalSetLayout);
     void CreatePipeline(vk::RenderPass renderPass);
 
-    std::unique_ptr<IdaPipeline> idaPipeline_;
+    std::unique_ptr<IdaPipeline> pipeline_;
     vk::PipelineLayout pipelineLayout_;
 };
 }

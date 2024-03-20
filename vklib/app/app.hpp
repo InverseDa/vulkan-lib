@@ -10,6 +10,7 @@
 #include "core/context.hpp"
 #include "descriptor/descriptors.hpp"
 #include "core/window.hpp"
+#include "core/game_object.hpp"
 
 class Application {
   public:
@@ -29,6 +30,7 @@ class Application {
     std::unique_ptr<ida::IdaWindow> window_;
     std::unique_ptr<ida::IdaRenderer> renderer_;
     std::unique_ptr<ida::IdaDescriptorPool> globalPool{};
+    ida::IdaGameObject::Map gameObjects_;
 
     Application(const std::string& title, int width, int height);
     void InitVulkan(std::vector<const char*>& extensions, GetSurfaceCallback cb, int windowWidth, int windowHeight);

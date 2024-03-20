@@ -43,26 +43,16 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
 }
 
 Context::~Context() {
-//    ShaderMgr::Quit();
-    device.destroySampler(sampler);
-    commandMgr.reset();
-    renderProcess.reset();
-    swapChain.reset();
-    device.destroy();
-    instance.destroy();
+
 }
 
 vk::Instance Context::CreateInstance(std::vector<const char*>& extensions) {
-    vk::InstanceCreateInfo createInfo;
-    vk::ApplicationInfo appInfo;
-    appInfo.setApiVersion(VK_VERSION_1_3);
-    createInfo
-        .setPApplicationInfo(&appInfo)
-        .setPEnabledExtensionNames(extensions);
-
-    std::vector<const char*> layers = {"VK_LAYER_KHRONOS_validation"};
-    createInfo.setPEnabledLayerNames(layers);
-
+    auto appInfo = vk::ApplicationInfo()
+                       .setApiVersion(VK_VERSION_1_3);
+    auto createInfo = vk::InstanceCreateInfo()
+                          .setPApplicationInfo(&appInfo)
+                          .setPEnabledExtensionNames(extensions)
+                          .setPEnabledLayerNames(validationLayers);
     return vk::createInstance(createInfo);
 }
 
@@ -76,9 +66,8 @@ vk::PhysicalDevice Context::PickupPhysicalDevice() {
 
 vk::Device Context::CreateDevice(vk::SurfaceKHR surface) {
     vk::DeviceCreateInfo deviceCreateInfo;
-    QueryQueueInfo(surface);
-    std::array extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    deviceCreateInfo.setPEnabledExtensionNames(extensions);
+    QueueFamilyIndices queueInfo = QueryQueueFamily(surface);
+    deviceCreateInfo.setPEnabledExtensionNames(deviceExtensions);
 
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     float priority = 1.0;
@@ -103,72 +92,65 @@ vk::Device Context::CreateDevice(vk::SurfaceKHR surface) {
     return phyDevice.createDevice(deviceCreateInfo);
 }
 
-void Context::QueryQueueInfo(vk::SurfaceKHR surface) {
+QueueFamilyIndices Context::QueryQueueFamily(vk::SurfaceKHR surface) {
+    QueueFamilyIndices queueFamilyIndices;
     auto queueFamilies = phyDevice.getQueueFamilyProperties();
     for (uint32_t i = 0; i < queueFamilies.size(); i++) {
-        if (queueFamilies[i].queueFlags | vk::QueueFlagBits::eGraphics) {
-            queueInfo.graphicsIndex = i;
+        if (queueFamilies[i].queueCount > 0 && queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+            queueFamilyIndices.graphicsIndex = i;
         }
         if (phyDevice.getSurfaceSupportKHR(i, surface)) {
-            queueInfo.presentIndex = i;
+            queueFamilyIndices.presentIndex = i;
         }
-        if (queueInfo) {
+        if (queueFamilyIndices) {
             break;
         }
     }
+    return queueFamilyIndices
 }
 
 void Context::InitRenderProcess() {
-//    renderProcess = std::make_unique<RenderProcess>();
+    //    renderProcess = std::make_unique<RenderProcess>();
 }
 
-void Context::InitSwapChain(int windowWidth, int windowHeight) {
-    swapChain = std::make_unique<IdaSwapChain>(surface_, windowWidth, windowHeight);
-}
-
-void Context::InitGraphicsPipeline() {
-//    renderProcess->CreateGraphicsPipeline(*ShaderMgr::GetInstance().Get("default"));
-}
-
-void Context::InitCommandPool() {
-    commandMgr = std::make_unique<CommandMgr>();
-}
-
-void Context::InitShaderModules() {
-    auto vertexSource = ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/frag.spv"));
-    auto fragSource = ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/vert.spv"));
-}
-
-void Context::InitSampler() {
-    auto createInfo = vk::SamplerCreateInfo()
-                          .setMagFilter(vk::Filter::eLinear)
-                          .setMinFilter(vk::Filter::eLinear)
-                          .setAddressModeU(vk::SamplerAddressMode::eRepeat)
-                          .setAddressModeV(vk::SamplerAddressMode::eRepeat)
-                          .setAddressModeW(vk::SamplerAddressMode::eRepeat)
-                          .setAnisotropyEnable(false)
-                          .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
-                          .setUnnormalizedCoordinates(false)
-                          .setCompareEnable(false)
-                          .setMipmapMode(vk::SamplerMipmapMode::eLinear);
-    sampler = Context::GetInstance().device.createSampler(createInfo);
-}
-
-void Context::GetSurface() {
-    surface_ = getSurfaceCb_(instance);
-    if (!surface_) {
-        IO::ThrowError("Failed to create surface");
+uint32_t Context::FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+    auto memProperties = phyDevice.getMemoryProperties();
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
     }
+    IO::ThrowError("Failed to find suitable memory type!");
 }
 
-void Context::InitVulkan(int windowWidth, int windowHeight) {
-    InitSwapChain(windowWidth, windowHeight);
-    InitShaderModules();
-    InitRenderProcess();
-    InitGraphicsPipeline();
-    swapChain->InitFramebuffers();
-    InitCommandPool();
-    InitSampler();
+SwapChainSupportDetails Context::QuerySwapChainSupport() {
+    SwapChainSupportDetails details;
+    details.capabilities = phyDevice.getSurfaceCapabilitiesKHR(surface_);
+    details.formats = phyDevice.getSurfaceFormatsKHR(surface_);
+    details.presentModes = phyDevice.getSurfacePresentModesKHR(surface_);
+    return details;
+}
+
+vk::Format Context::QuerySupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
+    for (vk::Format format : candidates) {
+        vk::FormatProperties props = phyDevice.getFormatProperties(format);
+        if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features) {
+            return format;
+        } else if (tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & features) == features) {
+            return format;
+        }
+    }
+    IO::ThrowError("Failed to find supported format");
+}
+
+void Context::CreateImageWithInfo(const vk::ImageCreateInfo& imageInfo, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory) {
+    image = device.createImage(imageInfo);
+    vk::MemoryRequirements memRequirements = device.getImageMemoryRequirements(image);
+    vk::MemoryAllocateInfo allocInfo;
+    allocInfo.setAllocationSize(memRequirements.size);
+    allocInfo.setMemoryTypeIndex(FindMemoryType(memRequirements.memoryTypeBits, properties));
+    imageMemory = device.allocateMemory(allocInfo);
+    device.bindImageMemory(image, imageMemory, 0);
 }
 
 } // namespace ida

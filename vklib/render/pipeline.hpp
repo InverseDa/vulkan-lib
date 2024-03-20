@@ -38,12 +38,12 @@ class IdaPipeline {
     void Bind(vk::CommandBuffer commandBuffer);
 
     static void DefaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
-    static void EnbaleAlphaBlending(PipelineConfigInfo& configInfo);
+    static void EnableAlphaBlending(PipelineConfigInfo& configInfo);
 
   private:
     void CreateGraphicsPipeline(
-        const std::string& vertPath,
-        const std::string& fragPath,
+        const std::vector<char>& vertCode,
+        const std::vector<char>& fragCode,
         const PipelineConfigInfo& configInfo);
     void CreateShaderModule(const std::vector<char>& code, vk::ShaderModule* shaderModule);
 

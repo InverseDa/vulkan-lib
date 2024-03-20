@@ -42,7 +42,7 @@ void SimpleRenderSystem::CreatePipeline(vk::RenderPass renderPass) {
     PipelineConfigInfo pipelineConfig{};
     pipelineConfig.renderPass = renderPass;
     pipelineConfig.pipelineLayout = pipelineLayout_;
-    idaPipeline_ = std::make_unique<IdaPipeline>(ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/frag.spv")),
+    pipeline_ = std::make_unique<IdaPipeline>(ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/frag.spv")),
                                                  ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/vert.spv")),
                                                  pipelineConfig);
 }
@@ -50,7 +50,7 @@ void SimpleRenderSystem::CreatePipeline(vk::RenderPass renderPass) {
 void SimpleRenderSystem::RenderGameObjects(FrameInfo& frameInfo) {
     auto& cmd = frameInfo.commandBuffer;
 
-    idaPipeline_->Bind(cmd);
+    pipeline_->Bind(cmd);
     cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                            pipelineLayout_,
                            0,

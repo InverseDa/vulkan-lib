@@ -2,8 +2,10 @@
 #include "core/context.hpp"
 #include "swapchain/swapchain.hpp"
 #include "global_info.hpp"
-
 #include "system/simple_render_system.hpp"
+#include "camera/camera.hpp"
+#include "core/keyboard_controller.hpp"
+#include "system/point_light_system.hpp"
 
 std::unique_ptr<Application> Application::instance_ = nullptr;
 
@@ -21,7 +23,7 @@ void Application::InitVulkan(std::vector<const char*>& extensions, GetSurfaceCal
     ida::Context::Init(extensions, cb);
     ida::Context::GetInstance().InitVulkan(windowWidth, windowHeight);
 
-    renderer_ = std::make_unique<ida::IdaRenderer>();
+    renderer_ = std::make_unique<ida::IdaRenderer>(*window_);
 }
 
 void Application::DestroyVulkan() {
@@ -55,10 +57,22 @@ int Application::Run() {
             .Build(globalDescriptorSets[i]);
     }
 
-    // TODO: add a simple render system
-    //    ida::SimpleRenderSystem simpleRenderSystem{
-    //
-    //    };
+    ida::SimpleRenderSystem simpleRenderSystem{
+        renderer_->GetRenderPass(),
+        globalSetLayout->GetDescriptorSetLayout(),
+    };
+    ida::PointLightSystem pointLightSystem{
+        renderer_->GetRenderPass(),
+        globalSetLayout->GetDescriptorSetLayout(),
+    };
+
+    ida::IdaCamera camera{};
+
+    auto viewObject = ida::IdaGameObject::CreateGameObject();
+    // TODO: ECS
+    // viewObject->AddComponent<ida::IdaCameraComponent>(camera);
+    viewObject.transform.translation.z = -2.5f;
+    ida::KeyboardMovementController cameraController{};
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     window_->Run([&]() {
@@ -66,9 +80,39 @@ int Application::Run() {
         float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
         currentTime = newTime;
 
-        renderer_->StartRender();
+        cameraController.MoveInPlaneXZ(frameTime, viewObject);
+        camera.SetViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
+        float aspect = renderer_->GetAspectRatio();
+        camera.SetPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.0f);
 
-        renderer_->EndRender();
+        if (auto commandBuffer = renderer_->BeginFrame()) {
+            int frameIndex = renderer_->GetCurrentFrameIndex();
+            ida::FrameInfo frameInfo{
+                frameIndex,
+                frameTime,
+                commandBuffer,
+                camera,
+                globalDescriptorSets[frameIndex],
+                gameObjects_,
+            };
+            // update global UBO
+            ida::GlobalUbo globalUbo{};
+            globalUbo.view = camera.GetView();
+            globalUbo.projection = camera.GetProjection();
+            globalUbo.inverseView = camera.GetInverseView();
+            pointLightSystem.Update(frameInfo, globalUbo);
+            uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
+            uboBuffers[frameIndex]->Flush();
+
+            renderer_->BeginSwapChainRenderPass(commandBuffer);
+
+            simpleRenderSystem.RenderGameObjects(frameInfo);
+            pointLightSystem.Render(frameInfo);
+
+            renderer_->EndSwapChainRenderPass(commandBuffer);
+            renderer_->EndFrame();
+        }
+        ida::Context::GetInstance().device.waitIdle();
     });
 
     DestroyVulkan();

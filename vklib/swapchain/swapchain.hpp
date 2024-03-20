@@ -22,11 +22,11 @@ class IdaSwapChain final {
     vk::Extent2D GetSwapChainExtent() { return swapChainExtent_; }
     uint32_t GetWidth() { return swapChainExtent_.width; }
     uint32_t GetHeight() { return swapChainExtent_.height; }
-    float ExtentAspectRatio() { return static_cast<float>(swapChainExtent_.width) / static_cast<float>(swapChainExtent_.height); }
+    float GetExtentAspectRatio() { return static_cast<float>(swapChainExtent_.width) / static_cast<float>(swapChainExtent_.height); }
 
     vk::Format FindDepthFormat();
     vk::Result AcquireNextImageIndex(uint32_t& imageIndex);
-    vk::Result SubmitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
+    vk::Result SubmitCommandBuffers(const vk::CommandBuffer* buffers, uint32_t* imageIndex);
 
     bool CompareSwapFormats(const IdaSwapChain& other) const {
         return swapChainImageFormat_ == other.swapChainImageFormat_ &&
@@ -41,6 +41,10 @@ class IdaSwapChain final {
     void CreateRenderPass();
     void CreateFramebuffers();
     void CreateSyncObjects();
+
+    vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+    vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    vk::Extent2D ChooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
 
     vk::Format swapChainImageFormat_;
     vk::Format swapChainDepthFormat_;
