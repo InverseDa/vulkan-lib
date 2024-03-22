@@ -1,11 +1,15 @@
 #include "model.hpp"
 #include "utils.hpp"
 
+#define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 #include "log/log.hpp"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 #include <memory>
 #include <unordered_map>
-
 namespace std {
 /**
  * @brief Hash function for glm::vec3
@@ -67,7 +71,7 @@ void IdaModel::Builder::LoadModel(const std::string& path) {
     std::string warn, err;
 
     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
-        throw std::runtime_error(warn + err);
+        IO::ThrowError("Failed to load model: {}", path);
     }
 
     vertices.clear();
@@ -193,6 +197,12 @@ void IdaModel::CreateIndexBuffer(const std::vector<uint32_t>& indices) {
         vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     IdaBuffer::Utils::CopyBuffer(stagingBuffer.GetBuffer(), indexBuffer_->GetBuffer(), bufferSize);
+}
+
+std::unique_ptr<IdaModel> IdaModel::CustomModel(const std::vector<Vertex>& vertices) {
+    Builder builder{};
+    builder.vertices = vertices;
+    return std::make_unique<IdaModel>(builder);
 }
 
 } // namespace ida

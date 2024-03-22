@@ -22,7 +22,7 @@ std::unique_ptr<IdaDescriptorSetLayout> IdaDescriptorSetLayout::Builder::Build()
     return std::make_unique<IdaDescriptorSetLayout>(bindings_);
 }
 
-IdaDescriptorSetLayout::IdaDescriptorSetLayout(std::unordered_map<uint32_t, vk::DescriptorSetLayoutBinding> bindings) {
+IdaDescriptorSetLayout::IdaDescriptorSetLayout(std::unordered_map<uint32_t, vk::DescriptorSetLayoutBinding> bindings) : bindings_(bindings) {
     std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
     for (const auto& [_, binding] : bindings) {
         layoutBindings.push_back(binding);
@@ -96,7 +96,8 @@ IdaDescriptorWriter& IdaDescriptorWriter::WriteBuffer(uint32_t binding, vk::Desc
     auto writeInfo = vk::WriteDescriptorSet()
                          .setDstBinding(binding)
                          .setDescriptorType(bindingDescription.descriptorType)
-                         .setPBufferInfo(bufferInfo);
+                         .setPBufferInfo(bufferInfo)
+                         .setDescriptorCount(1);
     writes_.push_back(writeInfo);
     return *this;
 }
@@ -106,7 +107,8 @@ IdaDescriptorWriter& IdaDescriptorWriter::WriteImage(uint32_t binding, vk::Descr
     auto writeInfo = vk::WriteDescriptorSet()
                          .setDstBinding(binding)
                          .setDescriptorType(bindingDescription.descriptorType)
-                         .setPImageInfo(imageInfo);
+                         .setPImageInfo(imageInfo)
+                         .setDescriptorCount(1);
     writes_.push_back(writeInfo);
     return *this;
 }
@@ -123,7 +125,7 @@ void IdaDescriptorWriter::Overwrite(vk::DescriptorSet& set) {
     for (auto& write : writes_) {
         write.setDstSet(set);
     }
-    Context::GetInstance().device.updateDescriptorSets(writes_, {});
+    Context::GetInstance().device.updateDescriptorSets(writes_, nullptr);
 }
 
 } // namespace ida

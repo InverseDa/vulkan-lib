@@ -47,8 +47,8 @@ uint32_t IdaBuffer::Utils::FindMemoryType(uint32_t typeFilter, vk::MemoryPropert
 }
 
 void IdaBuffer::Utils::CopyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
-    auto& cmdMgr = Context::GetInstance().commandMgr;
-    cmdMgr->ExecuteCommand(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
+    auto& ctx = Context::GetInstance();
+    ctx.ExecuteCommandBuffer(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
         auto copyRegion = vk::BufferCopy()
                               .setSize(size);
         cmdBuf.copyBuffer(srcBuffer, dstBuffer, copyRegion);
@@ -56,8 +56,8 @@ void IdaBuffer::Utils::CopyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk
 }
 
 void IdaBuffer::Utils::CopyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height, uint32_t layerCount) {
-    auto& cmdMgr = Context::GetInstance().commandMgr;
-    cmdMgr->ExecuteCommand(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
+    auto& ctx = Context::GetInstance();
+    ctx.ExecuteCommandBuffer(Context::GetInstance().graphicsQueue, [&](vk::CommandBuffer cmdBuf) {
         auto region = vk::BufferImageCopy()
                           .setBufferOffset(0)
                           .setBufferRowLength(0)

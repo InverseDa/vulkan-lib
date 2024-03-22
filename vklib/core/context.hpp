@@ -35,12 +35,12 @@ class Context final {
     static void Quit();
     static Context& GetInstance();
     vk::SurfaceKHR GetSurface() { return surface_; }
-    void InitVulkan(int windowWidth, int windowHeight);
     SwapChainSupportDetails QuerySwapChainSupport();
     QueueFamilyIndices QueryQueueFamily(vk::SurfaceKHR);
     vk::Format QuerySupportedFormat(const std::vector<vk::Format>&, vk::ImageTiling, vk::FormatFeatureFlags);
 
     void CreateImageWithInfo(const vk::ImageCreateInfo&, vk::MemoryPropertyFlags, vk::Image&, vk::DeviceMemory&);
+    void ExecuteCommandBuffer(vk::Queue queue, std::function<void(vk::CommandBuffer&)> func);
 
     ~Context();
 
@@ -50,7 +50,6 @@ class Context final {
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
     std::unique_ptr<IdaSwapChain> swapChain;
-    vk::Sampler sampler;
     vk::CommandPool commandPool;
 
   private:
@@ -61,16 +60,15 @@ class Context final {
     GetSurfaceCallback getSurfaceCb_ = nullptr;
 
     Context(std::vector<const char*>& extensions, GetSurfaceCallback);
-    void InitRenderProcess();
-    void InitSwapChain(int windowWidth, int windowHeight);
-    void InitGraphicsPipeline();
-    void InitCommandPool();
-    void InitShaderModules();
-    void InitSampler();
     uint32_t FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     vk::Instance CreateInstance(std::vector<const char*>& extensions);
     vk::PhysicalDevice PickupPhysicalDevice();
     vk::Device CreateDevice(vk::SurfaceKHR);
+    vk::CommandPool CreateCommandPool();
+
+    // cmd helper
+    std::vector<vk::CommandBuffer> CreateCommandBuffer(int count = 1);
+
 };
 } // namespace ida
 

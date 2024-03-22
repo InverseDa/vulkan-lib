@@ -10,7 +10,7 @@ class IdaDescriptorSetLayout {
   public:
     class Builder {
       public:
-        Builder();
+        Builder() = default;
         Builder& AddBinding(
             uint32_t binding,
             vk::DescriptorType descriptorType,
@@ -39,7 +39,7 @@ class IdaDescriptorPool {
   public:
     class Builder {
       public:
-        Builder();
+        Builder() = default;
         Builder& AddPoolSize(vk::DescriptorType type, uint32_t count);
         Builder& SetPoolFlags(vk::DescriptorPoolCreateFlags flags);
         Builder& SetMaxSets(uint32_t maxSets);

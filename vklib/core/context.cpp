@@ -29,21 +29,22 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
     if (!phyDevice) {
         IO::ThrowError("Failed to pickup physical device");
     }
-    IO::PrintLog(LOG_LEVEL_INFO, "Physical device name: {}", phyDevice.getProperties().deviceName.data());
+    IO::PrintLog(LOG_LEVEL::LOG_LEVEL_INFO, "Physical device name: {}", phyDevice.getProperties().deviceName.data());
 
-    GetSurface();
-
+    surface_ = getSurfaceCb_(instance);
     device = CreateDevice(surface_);
     if (!device) {
         IO::ThrowError("Failed to create device");
     }
 
+    auto queueInfo = QueryQueueFamily(surface_);
     graphicsQueue = device.getQueue(queueInfo.graphicsIndex.value(), 0);
     presentQueue = device.getQueue(queueInfo.presentIndex.value(), 0);
+
+    commandPool = CreateCommandPool();
 }
 
 Context::~Context() {
-
 }
 
 vk::Instance Context::CreateInstance(std::vector<const char*>& extensions) {
@@ -99,18 +100,14 @@ QueueFamilyIndices Context::QueryQueueFamily(vk::SurfaceKHR surface) {
         if (queueFamilies[i].queueCount > 0 && queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
             queueFamilyIndices.graphicsIndex = i;
         }
-        if (phyDevice.getSurfaceSupportKHR(i, surface)) {
+        if (queueFamilies[i].queueCount > 0 && phyDevice.getSurfaceSupportKHR(i, surface)) {
             queueFamilyIndices.presentIndex = i;
         }
         if (queueFamilyIndices) {
             break;
         }
     }
-    return queueFamilyIndices
-}
-
-void Context::InitRenderProcess() {
-    //    renderProcess = std::make_unique<RenderProcess>();
+    return queueFamilyIndices;
 }
 
 uint32_t Context::FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
@@ -151,6 +148,38 @@ void Context::CreateImageWithInfo(const vk::ImageCreateInfo& imageInfo, vk::Memo
     allocInfo.setMemoryTypeIndex(FindMemoryType(memRequirements.memoryTypeBits, properties));
     imageMemory = device.allocateMemory(allocInfo);
     device.bindImageMemory(image, imageMemory, 0);
+}
+
+std::vector<vk::CommandBuffer> Context::CreateCommandBuffer(int count) {
+    auto cmdInfo = vk::CommandBufferAllocateInfo()
+                       .setCommandPool(commandPool)
+                       .setLevel(vk::CommandBufferLevel::ePrimary)
+                       .setCommandBufferCount(count);
+    return device.allocateCommandBuffers(cmdInfo);
+}
+
+void Context::ExecuteCommandBuffer(vk::Queue queue, std::function<void(vk::CommandBuffer&)> func) {
+    auto cmdBuf = CreateCommandBuffer()[0];
+    vk::CommandBufferBeginInfo beginInfo;
+    beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    cmdBuf.begin(beginInfo);
+    if (func)
+        func(cmdBuf);
+    cmdBuf.end();
+    vk::SubmitInfo submitInfo;
+    submitInfo.setCommandBuffers(cmdBuf);
+    queue.submit(submitInfo);
+    queue.waitIdle();
+    device.waitIdle();
+    device.freeCommandBuffers(commandPool, cmdBuf);
+}
+
+vk::CommandPool Context::CreateCommandPool() {
+    auto queueInfo = QueryQueueFamily(surface_);
+    vk::CommandPoolCreateInfo createInfo;
+    createInfo.setQueueFamilyIndex(queueInfo.graphicsIndex.value());
+    createInfo.setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient);
+    return device.createCommandPool(createInfo);
 }
 
 } // namespace ida

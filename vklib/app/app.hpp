@@ -14,12 +14,7 @@
 
 class Application {
   public:
-    static Application* GetInstance(const std::string& title, int width, int height) {
-        if (!instance_) {
-            instance_.reset(new Application(title, width, height));
-        }
-        return instance_.get();
-    }
+    Application(const std::string& title = "Vulkan Demo", int width = 800, int height = 600);
 
     ~Application();
 
@@ -32,9 +27,9 @@ class Application {
     std::unique_ptr<ida::IdaDescriptorPool> globalPool{};
     ida::IdaGameObject::Map gameObjects_;
 
-    Application(const std::string& title, int width, int height);
     void InitVulkan(std::vector<const char*>& extensions, GetSurfaceCallback cb, int windowWidth, int windowHeight);
     void DestroyVulkan();
+    void LoadGameObjects();
 };
 
 #endif // VULKAN_LIB_APP_HPP

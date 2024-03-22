@@ -39,6 +39,7 @@ class IdaModel {
     IdaModel& operator=(const IdaModel&) = delete;
 
     static std::unique_ptr<IdaModel> ImportModel(const std::string& path);
+    static std::unique_ptr<IdaModel> CustomModel(const std::vector<Vertex>& vertices);
 
     void Bind(vk::CommandBuffer cmd);
     void Draw(vk::CommandBuffer cmd);

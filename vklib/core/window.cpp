@@ -47,21 +47,18 @@ void IdaWindow::Run(std::function<void()> func) {
             if (event_.type == SDL_WINDOWEVENT && event_.window.event == SDL_WINDOWEVENT_RESIZED) {
                 width_ = event_.window.data1;
                 height_ = event_.window.data2;
-                FrameBufferResizeCallback(width_, height_);
+                FrameBufferResizeCallback(window_, width_, height_);
             }
         }
         func();
     }
 }
 
-void IdaWindow::FrameBufferResizeCallback(int width, int height) {
-    auto& ctx = Context::GetInstance();
-    ctx.device.waitIdle();
-
-    ctx.swapChain.reset();
-    ctx.GetSurface();
-    ctx.InitSwapChain(width, height);
-    ctx.swapChain->InitFramebuffers();
+void IdaWindow::FrameBufferResizeCallback(SDL_Window* window, int width, int height) {
+    auto idaWindow = reinterpret_cast<IdaWindow*>(SDL_GetWindowData(window, "IdaWindow"));
+    idaWindow->resizeNow_ = true;
+    idaWindow->width_ = width;
+    idaWindow->height_ = height;
 }
 
 } // namespace ida

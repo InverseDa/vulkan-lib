@@ -13,6 +13,15 @@ IdaSwapChain::IdaSwapChain(vk::Extent2D windowExtent, std::shared_ptr<IdaSwapCha
     oldSwapChain_ = nullptr;
 }
 
+void IdaSwapChain::Init() {
+    CreateSwapChain();
+    CreateImageViews();
+    CreateRenderPass();
+    CreateDepthResources();
+    CreateFramebuffers();
+    CreateSyncObjects();
+}
+
 IdaSwapChain::~IdaSwapChain() {
     auto& device = Context::GetInstance().device;
     for (auto imageView : swapChainImageViews_) {
@@ -53,10 +62,8 @@ vk::Result IdaSwapChain::AcquireNextImageIndex(uint32_t& imageIndex) {
     device.waitForFences(inFlightFences_[currentFrame], true, std::numeric_limits<std::uint64_t>::max());
 
     auto resultValue = device.acquireNextImageKHR(swapChain_, std::numeric_limits<std::uint64_t>::max(), imageAvailableSemaphores_[currentFrame], nullptr);
-    if (resultValue.result != vk::Result::eSuccess) {
-        return resultValue.result;
-    }
     imageIndex = resultValue.value;
+    return resultValue.result;
 }
 
 vk::Result IdaSwapChain::SubmitCommandBuffers(const vk::CommandBuffer* buffers, uint32_t* imageIndex) {
@@ -90,18 +97,12 @@ vk::Result IdaSwapChain::SubmitCommandBuffers(const vk::CommandBuffer* buffers, 
                            .setPImageIndices(imageIndex);
 
     auto result = ctx.presentQueue.presentKHR(presentInfo);
+    if(result != vk::Result::eSuccess) {
+        IO::PrintLog(LOG_LEVEL::LOG_LEVEL_ERROR, "Failed to present image");
+    }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     return result;
-}
-
-void IdaSwapChain::Init() {
-    CreateSwapChain();
-    CreateImageViews();
-    CreateRenderPass();
-    CreateDepthResources();
-    CreateFramebuffers();
-    CreateSyncObjects();
 }
 
 void IdaSwapChain::CreateSwapChain() {
@@ -134,8 +135,11 @@ void IdaSwapChain::CreateSwapChain() {
     std::array queueIndices = {indices.graphicsIndex.value(), indices.presentIndex.value()};
     if (indices.graphicsIndex.value() == indices.presentIndex.value()) {
         createInfo.setImageSharingMode(vk::SharingMode::eExclusive);
+        createInfo.setQueueFamilyIndexCount(0);
+        createInfo.setPQueueFamilyIndices(nullptr);
     } else {
         createInfo.setImageSharingMode(vk::SharingMode::eConcurrent);
+        createInfo.setQueueFamilyIndexCount(static_cast<uint32_t>(queueIndices.size()));
         createInfo.setQueueFamilyIndices(queueIndices);
     }
 
@@ -192,6 +196,8 @@ void IdaSwapChain::CreateDepthResources() {
 }
 
 void IdaSwapChain::CreateRenderPass() {
+    swapChainDepthFormat_ = FindDepthFormat();
+
     auto depthAttachment = vk::AttachmentDescription()
                                .setFormat(swapChainDepthFormat_)
                                .setSamples(vk::SampleCountFlagBits::e1)

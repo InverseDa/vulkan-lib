@@ -40,10 +40,11 @@ void SimpleRenderSystem::CreatePipelineLayout(vk::DescriptorSetLayout globalSetL
 
 void SimpleRenderSystem::CreatePipeline(vk::RenderPass renderPass) {
     PipelineConfigInfo pipelineConfig{};
+    IdaPipeline::DefaultPipelineConfigInfo(pipelineConfig);
     pipelineConfig.renderPass = renderPass;
     pipelineConfig.pipelineLayout = pipelineLayout_;
-    pipeline_ = std::make_unique<IdaPipeline>(ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/frag.spv")),
-                                                 ReadWholeFile(GetTestsPath("shaderMgrTest/shaders/vert.spv")),
+    pipeline_ = std::make_unique<IdaPipeline>(ReadWholeFile("shaders/simple_shader.vert.spv"),
+                                                 ReadWholeFile("shaders/simple_shader.frag.spv"),
                                                  pipelineConfig);
 }
 
@@ -58,18 +59,18 @@ void SimpleRenderSystem::RenderGameObjects(FrameInfo& frameInfo) {
                            nullptr);
     for (auto& gameObject : frameInfo.gameObjects) {
         auto& obj = gameObject.second;
-        if(obj->model == nullptr) {
+        if(obj.model == nullptr) {
             continue;
         }
         SimplePushConstantData push{};
-        push.modelMatrix = obj->transform.mat4();
+        push.modelMatrix = obj.transform.mat4();
         push.normalMatrix = glm::transpose(glm::inverse(push.modelMatrix));
         cmd.pushConstants<SimplePushConstantData>(pipelineLayout_,
                                                   vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                                                   0,
                                                   push);
-        obj->model->Bind(cmd);
-        obj->model->Draw(cmd);
+        obj.model->Bind(cmd);
+        obj.model->Draw(cmd);
     }
 }
 

@@ -19,6 +19,8 @@ class IdaWindow {
     bool ShouldClose() { return shouldClose_; }
     vk::Extent2D GetExtent() { return {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)}; }
     SDL_Window* GetWindow() { return window_; }
+    bool IsResizeNow() { return resizeNow_; }
+    void ResetResizeFlag() { resizeNow_ = false; }
 
     void Run(std::function<void()> func);
 
@@ -26,7 +28,7 @@ class IdaWindow {
     std::vector<const char*> extensions;
 
   private:
-    static void FrameBufferResizeCallback(int width, int height);
+    void FrameBufferResizeCallback(SDL_Window* window, int width, int height);
     void InitWindow();
 
     std::string title_;
@@ -36,6 +38,7 @@ class IdaWindow {
     SDL_Event event_;
     SDL_Window* window_;
     bool shouldClose_ = false;
+    bool resizeNow_ = false;
 };
 } // namespace ida
 
