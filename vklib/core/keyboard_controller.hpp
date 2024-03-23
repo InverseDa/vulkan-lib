@@ -1,7 +1,7 @@
 #ifndef VULKAN_LIB_KEYBOARD_CONTROLLER_HPP
 #define VULKAN_LIB_KEYBOARD_CONTROLLER_HPP
 
-#include "SDL2/SDL.h"
+#include "window.hpp"
 
 #include "core/game_object.hpp"
 
@@ -9,20 +9,19 @@ namespace ida {
 class KeyboardMovementController {
   public:
     struct KeyMappings {
-        SDL_Keycode moveForward = SDLK_w;
-        SDL_Keycode moveBackward = SDLK_s;
-        SDL_Keycode moveLeft = SDLK_a;
-        SDL_Keycode moveRight = SDLK_d;
-        SDL_Keycode moveUp = SDLK_SPACE;
-        SDL_Keycode moveDown = SDLK_LSHIFT;
+        int moveForward = GLFW_KEY_W;
+        int moveBackward = GLFW_KEY_S;
+        int moveLeft = GLFW_KEY_A;
+        int moveRight = GLFW_KEY_D;
+        int moveUp = GLFW_KEY_SPACE;
+        int moveDown = GLFW_KEY_LEFT_SHIFT;
 
-        SDL_Keycode lookLeft = SDLK_LEFT;
-        SDL_Keycode lookRight = SDLK_RIGHT;
-        SDL_Keycode lookUp = SDLK_UP;
-        SDL_Keycode lookDown = SDLK_DOWN;
+        int lookLeft = GLFW_KEY_LEFT;
+        int lookRight = GLFW_KEY_RIGHT;
+        int lookUp = GLFW_KEY_UP;
+        int lookDown = GLFW_KEY_DOWN;
     };
-
-    void MoveInPlaneXZ(SDL_Keycode key, float dt, IdaGameObject& gameObject);
+    void MoveInPlaneXZ(GLFWwindow* window, float dt, IdaGameObject& gameObject);
 
     KeyMappings keys{};
     float movementSpeed = 3.0f;

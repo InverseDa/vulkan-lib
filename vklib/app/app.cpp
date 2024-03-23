@@ -78,26 +78,13 @@ int Application::Run() {
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     window_->Run([&]() {
+        glfwPollEvents();
+
         auto newTime = std::chrono::high_resolution_clock::now();
         float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
         currentTime = newTime;
 
-        while (SDL_PollEvent(&window_->event_)) {
-            if (window_->event_.type == SDL_QUIT) {
-                window_->shouldClose_ = true;
-            }
-            if (window_->event_.type == SDL_WINDOWEVENT && window_->event_.window.event == SDL_WINDOWEVENT_RESIZED) {
-                window_->width_ = window_->event_.window.data1;
-                window_->height_ = window_->event_.window.data2;
-                //                window_->FrameBufferResizeCallback(window_, window_->width_, window_->height_);
-            }
-            if (window_->event_.type == SDL_KEYDOWN) {
-                auto keyCode = window_->event_.key.keysym.sym;
-
-                cameraController.MoveInPlaneXZ(keyCode, frameTime, viewObject);
-            }
-        }
-
+        cameraController.MoveInPlaneXZ(window_->window_, frameTime, viewObject);
         camera.SetViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
         float aspect = renderer_->GetAspectRatio();
         camera.SetPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.0f);
@@ -117,7 +104,7 @@ int Application::Run() {
             globalUbo.view = camera.GetView();
             globalUbo.projection = camera.GetProjection();
             globalUbo.inverseView = camera.GetInverseView();
-            //            pointLightSystem.Update(frameInfo, globalUbo);
+            pointLightSystem.Update(frameInfo, globalUbo);
             uboBuffers[frameIndex]->WriteToBuffer(&globalUbo);
             uboBuffers[frameIndex]->Flush();
 

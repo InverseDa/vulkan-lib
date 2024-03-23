@@ -15,8 +15,7 @@ void IdaRenderer::RecreateSwapChain() {
     auto extent = window_.GetExtent();
     while (extent.width == 0 || extent.height == 0) {
         extent = window_.GetExtent();
-        SDL_PumpEvents();
-        SDL_WaitEvent(nullptr);
+        glfwPollEvents();
     }
     device.waitIdle();
 

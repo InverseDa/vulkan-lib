@@ -9,8 +9,8 @@
 #include "render/renderer.hpp"
 #include "core/context.hpp"
 #include "descriptor/descriptors.hpp"
-#include "core/window.hpp"
 #include "core/game_object.hpp"
+#include "core/window.hpp"
 
 class Application {
   public:
