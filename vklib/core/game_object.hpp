@@ -9,6 +9,18 @@
 
 namespace ida {
 
+enum GameObjectType {
+    Camera,
+    Model,
+    Light,
+};
+
+inline std::unordered_map<GameObjectType, std::string> GameObjectTypeNames = {
+    {Camera, "Camera"},
+    {Model, "Model"},
+    {Light, "Light"},
+};
+
 struct TransformComponent {
     glm::vec3 translation{};
     glm::vec3 rotation{};
@@ -28,12 +40,13 @@ class IdaGameObject {
     using id_t = unsigned int;
     using Map = std::unordered_map<id_t, IdaGameObject>;
 
-    static IdaGameObject CreateGameObject() {
+    static IdaGameObject CreateGameObject(GameObjectType type) {
         static id_t currentId = 0;
-        return IdaGameObject{currentId++};
+        return IdaGameObject{currentId++, type};
     }
 
     static IdaGameObject MakePointLight(
+        GameObjectType type = Light,
         float intensity = 10.f,
         float radius = 0.1f,
         glm::vec3 color = glm::vec3(1.f));
@@ -54,9 +67,10 @@ class IdaGameObject {
     std::unique_ptr<PointLightComponent> pointLight{};
 
   private:
-    IdaGameObject(id_t id) : id_{id} {}
+    IdaGameObject(id_t id, GameObjectType type) : id_{id}, type_{type} {}
 
     id_t id_;
+    GameObjectType type_;
 };
 
 } // namespace ida

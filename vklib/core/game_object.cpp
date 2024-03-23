@@ -59,8 +59,8 @@ glm::mat3 TransformComponent::normalMatrix() {
     };
 }
 
-IdaGameObject IdaGameObject::MakePointLight(float intensity, float radius, glm::vec3 color) {
-    IdaGameObject gameObj = IdaGameObject::CreateGameObject();
+IdaGameObject IdaGameObject::MakePointLight(GameObjectType type, float intensity, float radius, glm::vec3 color) {
+    IdaGameObject gameObj = IdaGameObject::CreateGameObject(type);
     gameObj.color = color;
     gameObj.transform.scale.x = radius;
     gameObj.pointLight = std::make_unique<PointLightComponent>();
@@ -69,7 +69,7 @@ IdaGameObject IdaGameObject::MakePointLight(float intensity, float radius, glm::
 }
 
 IdaGameObject::~IdaGameObject() {
-    IO::PrintLog(LOG_LEVEL::LOG_LEVEL_INFO, "Destroy Model id: {}", id_);
+    IO::PrintLog(LOG_LEVEL::LOG_LEVEL_INFO, "GameObject destroyed, Type: {}", GameObjectTypeNames[type_]);
 }
 
 } // namespace ida

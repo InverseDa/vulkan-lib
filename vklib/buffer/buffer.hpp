@@ -3,7 +3,23 @@
 
 #include "vulkan/vulkan.hpp"
 
+#include <unordered_map>
+
 namespace ida {
+
+enum BufferType {
+    VertexBuffer,
+    IndexBuffer,
+    UniformBuffer,
+    StagingBuffer,
+};
+
+inline std::unordered_map<BufferType, std::string> BufferTypeNames = {
+    {VertexBuffer, "VertexBuffer"},
+    {IndexBuffer, "IndexBuffer"},
+    {UniformBuffer, "UniformBuffer"},
+    {StagingBuffer, "StagingBuffer"},
+};
 
 class IdaBuffer {
   public:
@@ -20,6 +36,7 @@ class IdaBuffer {
     };
 
     IdaBuffer(
+        BufferType type,
         vk::DeviceSize instanceSize,
         uint32_t instanceCount,
         vk::BufferUsageFlags usage,
@@ -48,9 +65,13 @@ class IdaBuffer {
     vk::DeviceSize GetBufferSize() { return bufferSize_; }
     vk::BufferUsageFlags GetUsageFlags() { return usageFlags_; }
     vk::MemoryPropertyFlags GetMemoryPropertyFlags() { return memoryFlags_; }
+    BufferType GetType() { return type_; }
+    std::string GetTypeName() { return BufferTypeNames[type_]; }
 
   private:
     static vk::DeviceSize GetAlignment(vk::DeviceSize instanceSize, vk::DeviceSize minOffsetAlignment);
+
+    BufferType type_;
 
     vk::BufferUsageFlags usageFlags_;
     vk::MemoryPropertyFlags memoryFlags_;
@@ -64,7 +85,7 @@ class IdaBuffer {
 
     uint32_t instanceCount_;
 
-    void* mapped_;
+    void* mapped_ = nullptr;
 };
 
 } // namespace ida

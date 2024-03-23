@@ -20,7 +20,7 @@ void TriangleRenderSystem::Render(FrameInfo& frameInfo) {
     auto& cmd = frameInfo.commandBuffer;
 
     pipeline_->Bind(cmd);
-    auto& obj = frameInfo.gameObjects.at(3);
+    auto& obj = frameInfo.gameObjects.at(0);
     auto data = TrianglePushConstantData{};
     cmd.pushConstants(pipelineLayout_, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0,
                       sizeof(TrianglePushConstantData), &data);
