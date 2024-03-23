@@ -1,12 +1,12 @@
 #include "app.hpp"
-#include "core/context.hpp"
-#include "swapchain/swapchain.hpp"
-#include "global_info.hpp"
-#include "system/simple_render_system.hpp"
 #include "camera/camera.hpp"
+#include "core/context.hpp"
 #include "core/keyboard_controller.hpp"
+#include "global_info.hpp"
+#include "swapchain/swapchain.hpp"
 #include "system/point_light_system.hpp"
 #include "system/triangle_render_system.hpp"
+#include "system/simple_render_system.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -16,7 +16,7 @@
 
 Application::Application(const std::string& title, int width, int height) {
     window_ = std::make_unique<ida::IdaWindow>(width, height, title);
-    InitVulkan(window_->extensions, window_->getSurfaceCallback, width, height);
+    ida::Context::Init(window_->extensions, window_->getSurfaceCallback);
     renderer_ = std::make_unique<ida::IdaRenderer>(*window_);
 
     // Init global descriptor pool
@@ -26,19 +26,6 @@ Application::Application(const std::string& title, int width, int height) {
                      .Build();
 
     LoadGameObjects();
-}
-
-void Application::InitVulkan(std::vector<const char*>& extensions, GetSurfaceCallback cb, int windowWidth, int windowHeight) {
-    ida::Context::Init(extensions, cb);
-    //    ida::Context::GetInstance().InitVulkan(windowWidth, windowHeight);
-}
-
-void Application::DestroyVulkan() {
-    ida::Context::GetInstance().device.waitIdle();
-    renderer_.reset();
-    //    ida::TextureMgr::GetInstance().Clear();
-    //    ida::DescriptorSetMgr::Quit();
-    ida::Context::Quit();
 }
 
 Application::~Application() {
@@ -72,15 +59,11 @@ int Application::Run() {
             .Build(globalDescriptorSets[i]);
     }
 
-    //    ida::SimpleRenderSystem simpleRenderSystem{
-    //        renderer_->GetRenderPass(),
-    //        globalSetLayout->GetDescriptorSetLayout(),
-    //    };
-    //    ida::PointLightSystem pointLightSystem{
-    //        renderer_->GetRenderPass(),
-    //        globalSetLayout->GetDescriptorSetLayout(),
-    //    };
-    ida::TriangleRenderSystem triangleRenderSystem{
+    ida::SimpleRenderSystem simpleRenderSystem{
+        renderer_->GetRenderPass(),
+        globalSetLayout->GetDescriptorSetLayout(),
+    };
+    ida::PointLightSystem pointLightSystem{
         renderer_->GetRenderPass(),
         globalSetLayout->GetDescriptorSetLayout(),
     };
@@ -139,73 +122,57 @@ int Application::Run() {
             uboBuffers[frameIndex]->Flush();
 
             renderer_->BeginSwapChainRenderPass(commandBuffer);
-
-            //            simpleRenderSystem.RenderGameObjects(frameInfo);
-            //            pointLightSystem.Render(frameInfo);
-            triangleRenderSystem.Render(frameInfo);
-
+            {
+                simpleRenderSystem.RenderGameObjects(frameInfo);
+                pointLightSystem.Render(frameInfo);
+            }
             renderer_->EndSwapChainRenderPass(commandBuffer);
             renderer_->EndFrame();
         }
     });
     ida::Context::GetInstance().device.waitIdle();
-
-    //    DestroyVulkan();
     return 0;
 }
 
 void Application::LoadGameObjects() {
-    //    std::shared_ptr<ida::IdaModel> model = ida::IdaModel::ImportModel("models/flat_vase.obj");
-    //    auto vase = ida::IdaGameObject::CreateGameObject();
-    //    vase.model = model;
-    //    vase.transform.translation = {-.5f, .5f, 0.f};
-    //    vase.transform.scale = {3.f, 1.5f, 3.f};
-    //    gameObjects_.emplace(vase.GetId(), std::move(vase));
-    //
-    //    model = ida::IdaModel::ImportModel("models/smooth_vase.obj");
-    //    auto vase2 = ida::IdaGameObject::CreateGameObject();
-    //    vase2.model = model;
-    //    vase2.transform.translation = {.5f, .5f, 0.f};
-    //    vase2.transform.scale = {3.f, 1.5f, 3.f};
-    //    gameObjects_.emplace(vase2.GetId(), std::move(vase2));
-    //
-    //    model = ida::IdaModel::ImportModel("models/quad.obj");
-    //    auto quad = ida::IdaGameObject::CreateGameObject();
-    //    quad.model = model;
-    //    quad.transform.translation = {.5f, .5f, 0.f};
-    //    quad.transform.scale = {3.f, 1.f, 3.f};
-    //    gameObjects_.emplace(quad.GetId(), std::move(quad));
+    std::shared_ptr<ida::IdaModel> model = ida::IdaModel::ImportModel("models/flat_vase.obj");
+    auto vase = ida::IdaGameObject::CreateGameObject(ida::GameObjectType::Model);
+    vase.model = model;
+    vase.transform.translation = {-.5f, .5f, 0.f};
+    vase.transform.scale = {3.f, 1.5f, 3.f};
+    gameObjects_.emplace(vase.GetId(), std::move(vase));
 
-    // custom triangle model
-    std::shared_ptr<ida::IdaModel> model = ida::IdaModel::CustomModel(
-        {
-            {{-1.f, -1.f, 0.f}, {1.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, {1.f, 0.f}},
-            {{1.f, -1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 0.f}, {0.f, 0.f}},
-            {{0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 0.f}, {0.5f, 1.f}},
-        });
-    auto triangle = ida::IdaGameObject::CreateGameObject(ida::GameObjectType::Model);
-    triangle.model = model;
-    triangle.transform.translation = {0.f, 0.f, 0.f};
-    triangle.transform.scale = {1.f, 1.f, 1.f};
-    gameObjects_.emplace(triangle.GetId(), std::move(triangle));
+    model = ida::IdaModel::ImportModel("models/smooth_vase.obj");
+    auto vase2 = ida::IdaGameObject::CreateGameObject(ida::GameObjectType::Model);
+    vase2.model = model;
+    vase2.transform.translation = {.5f, .5f, 0.f};
+    vase2.transform.scale = {3.f, 1.5f, 3.f};
+    gameObjects_.emplace(vase2.GetId(), std::move(vase2));
 
-    //    std::vector<glm::vec3> lightColors{
-    //        {1.f, .1f, .1f},
-    //        {.1f, .1f, 1.f},
-    //        {.1f, 1.f, .1f},
-    //        {1.f, 1.f, .1f},
-    //        {.1f, 1.f, 1.f},
-    //        {1.f, 1.f, 1.f},
-    //    };
+    model = ida::IdaModel::ImportModel("models/quad.obj");
+    auto quad = ida::IdaGameObject::CreateGameObject(ida::GameObjectType::Model);
+    quad.model = model;
+    quad.transform.translation = {.5f, .5f, 0.f};
+    quad.transform.scale = {3.f, 1.f, 3.f};
+    gameObjects_.emplace(quad.GetId(), std::move(quad));
 
-    //    for (int i = 0; i < lightColors.size(); i++) {
-    //        auto pointLight = ida::IdaGameObject::MakePointLight(0.2f);
-    //        pointLight.color = lightColors[i];
-    //        auto rotateLight = glm::rotate(
-    //            glm::mat4(1.f),
-    //            (i * glm::two_pi<float>()) / lightColors.size(),
-    //            {0.f, -1.f, 0.f});
-    //        pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
-    //        gameObjects_.emplace(pointLight.GetId(), std::move(pointLight));
-    //    }
+    std::vector<glm::vec3> lightColors{
+        {1.f, .1f, .1f},
+        {.1f, .1f, 1.f},
+        {.1f, 1.f, .1f},
+        {1.f, 1.f, .1f},
+        {.1f, 1.f, 1.f},
+        {1.f, 1.f, 1.f},
+    };
+
+    for (int i = 0; i < lightColors.size(); i++) {
+        auto pointLight = ida::IdaGameObject::MakePointLight(0.2f);
+        pointLight.color = lightColors[i];
+        auto rotateLight = glm::rotate(
+            glm::mat4(1.f),
+            (i * glm::two_pi<float>()) / lightColors.size(),
+            {0.f, -1.f, 0.f});
+        pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+        gameObjects_.emplace(pointLight.GetId(), std::move(pointLight));
+    }
 }

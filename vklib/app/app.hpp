@@ -26,8 +26,6 @@ class Application {
     std::unique_ptr<ida::IdaDescriptorPool> globalPool{};
     ida::IdaGameObject::Map gameObjects_;
 
-    void InitVulkan(std::vector<const char*>& extensions, GetSurfaceCallback cb, int windowWidth, int windowHeight);
-    void DestroyVulkan();
     void LoadGameObjects();
 };
 
