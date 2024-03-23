@@ -45,6 +45,11 @@ Context::Context(std::vector<const char*>& extensions, GetSurfaceCallback cb) {
 }
 
 Context::~Context() {
+    device.destroyCommandPool(commandPool);
+    device.destroy();
+
+    instance.destroySurfaceKHR(surface_);
+    instance.destroy();
 }
 
 vk::Instance Context::CreateInstance(std::vector<const char*>& extensions) {

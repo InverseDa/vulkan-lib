@@ -122,7 +122,10 @@ IdaModel::IdaModel(const IdaModel::Builder& builder) {
     CreateIndexBuffer(builder.indices);
 }
 
-IdaModel::~IdaModel() {}
+IdaModel::~IdaModel() {
+    vertexBuffer_.reset();
+    indexBuffer_.reset();
+}
 
 std::unique_ptr<IdaModel> IdaModel::ImportModel(const std::string& path) {
     Builder builder{};

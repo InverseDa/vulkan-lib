@@ -21,7 +21,6 @@ class Application {
     int Run();
 
   private:
-    static std::unique_ptr<Application> instance_;
     std::unique_ptr<ida::IdaWindow> window_;
     std::unique_ptr<ida::IdaRenderer> renderer_;
     std::unique_ptr<ida::IdaDescriptorPool> globalPool{};

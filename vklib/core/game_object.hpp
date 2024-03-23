@@ -43,6 +43,8 @@ class IdaGameObject {
     IdaGameObject(IdaGameObject&&) = default;
     IdaGameObject& operator=(IdaGameObject&&) = default;
 
+    ~IdaGameObject();
+
     id_t GetId() const { return id_; }
 
     glm::vec3 color{};

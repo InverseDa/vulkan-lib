@@ -1,4 +1,5 @@
 #include "game_object.hpp"
+#include "log/log.hpp"
 
 namespace ida {
 glm::mat4 TransformComponent::mat4() {
@@ -65,6 +66,10 @@ IdaGameObject IdaGameObject::MakePointLight(float intensity, float radius, glm::
     gameObj.pointLight = std::make_unique<PointLightComponent>();
     gameObj.pointLight->lightIntensity = intensity;
     return gameObj;
+}
+
+IdaGameObject::~IdaGameObject() {
+    IO::PrintLog(LOG_LEVEL::LOG_LEVEL_INFO, "Destroy Model id: {}", id_);
 }
 
 } // namespace ida

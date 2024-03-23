@@ -41,7 +41,15 @@ void Application::DestroyVulkan() {
     ida::Context::Quit();
 }
 
-Application::~Application() {}
+Application::~Application() {
+    ida::Context::GetInstance().device.waitIdle();
+    std::destroy(gameObjects_.begin(), gameObjects_.end());
+    globalPool.reset();
+    renderer_.reset();
+    renderer_.reset();
+    window_.reset();
+    ida::Context::Quit();
+}
 
 int Application::Run() {
     std::vector<std::unique_ptr<ida::IdaBuffer>> uboBuffers(ida::IdaSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -137,7 +145,7 @@ int Application::Run() {
     });
     ida::Context::GetInstance().device.waitIdle();
 
-    DestroyVulkan();
+//    DestroyVulkan();
     return 0;
 }
 
