@@ -44,6 +44,7 @@ void TriangleRenderSystem::CreatePipelineLayout(vk::DescriptorSetLayout globalSe
 void TriangleRenderSystem::CreatePipeline(vk::RenderPass renderPass) {
     PipelineConfigInfo pipelineConfig{};
     IdaPipeline::DefaultPipelineConfigInfo(pipelineConfig);
+    IdaPipeline::EnableAlphaBlending(pipelineConfig);
     pipelineConfig.renderPass = renderPass;
     pipelineConfig.pipelineLayout = pipelineLayout_;
     pipeline_ = std::make_unique<IdaPipeline>(ReadWholeFile("shaders/triangle.vert.spv"),

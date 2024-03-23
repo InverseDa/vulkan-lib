@@ -226,6 +226,7 @@ void IdaSwapChain::CreateRenderPass() {
 
     auto subPass = vk::SubpassDescription()
                        .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+                       .setColorAttachmentCount(1)
                        .setPColorAttachments(&colorAttachmentRef)
                        .setPDepthStencilAttachment(&depthAttachmentRef);
     auto subPassDependency = vk::SubpassDependency()

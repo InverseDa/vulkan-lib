@@ -64,14 +64,14 @@ int Application::Run() {
             .Build(globalDescriptorSets[i]);
     }
 
-    ida::SimpleRenderSystem simpleRenderSystem{
-        renderer_->GetRenderPass(),
-        globalSetLayout->GetDescriptorSetLayout(),
-    };
-    ida::PointLightSystem pointLightSystem{
-        renderer_->GetRenderPass(),
-        globalSetLayout->GetDescriptorSetLayout(),
-    };
+//    ida::SimpleRenderSystem simpleRenderSystem{
+//        renderer_->GetRenderPass(),
+//        globalSetLayout->GetDescriptorSetLayout(),
+//    };
+//    ida::PointLightSystem pointLightSystem{
+//        renderer_->GetRenderPass(),
+//        globalSetLayout->GetDescriptorSetLayout(),
+//    };
     ida::TriangleRenderSystem triangleRenderSystem{
         renderer_->GetRenderPass(),
         globalSetLayout->GetDescriptorSetLayout(),
@@ -124,8 +124,8 @@ int Application::Run() {
             renderer_->EndSwapChainRenderPass(commandBuffer);
             renderer_->EndFrame();
         }
-        ida::Context::GetInstance().device.waitIdle();
     });
+    ida::Context::GetInstance().device.waitIdle();
 
     DestroyVulkan();
     return 0;
