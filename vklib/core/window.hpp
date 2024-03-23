@@ -25,11 +25,8 @@ class IdaWindow {
     void Run(std::function<void()> func);
 
     GetSurfaceCallback getSurfaceCallback;
+    KeyboardEventCallback keyboardEventCallback;
     std::vector<const char*> extensions;
-
-  private:
-    void FrameBufferResizeCallback(SDL_Window* window, int width, int height);
-    void InitWindow();
 
     std::string title_;
     int width_;
@@ -39,6 +36,12 @@ class IdaWindow {
     SDL_Window* window_;
     bool shouldClose_ = false;
     bool resizeNow_ = false;
+  private:
+    void FrameBufferResizeCallback(SDL_Window* window, int width, int height);
+    void InitWindow();
+
+
+
 };
 } // namespace ida
 

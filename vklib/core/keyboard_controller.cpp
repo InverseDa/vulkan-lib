@@ -2,16 +2,15 @@
 #include <glm/gtc/constants.hpp>
 
 namespace ida {
-void KeyboardMovementController::MoveInPlaneXZ(float dt, ida::IdaGameObject& gameObject) {
-    const Uint8* state = SDL_GetKeyboardState(nullptr);
+void KeyboardMovementController::MoveInPlaneXZ(SDL_Keycode key, float dt, ida::IdaGameObject& gameObject) {
     glm::vec3 rotate{0.0f};
-    if (state[keys.lookLeft])
+    if (key == keys.lookLeft)
         rotate.y -= 1.f;
-    if (state[keys.lookRight])
+    if (key == keys.lookRight)
         rotate.y += 1.f;
-    if (state[keys.lookUp])
+    if (key == keys.lookUp)
         rotate.x += 1.f;
-    if (state[keys.lookDown])
+    if (key == keys.lookDown)
         rotate.x -= 1.f;
 
     if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
@@ -27,17 +26,17 @@ void KeyboardMovementController::MoveInPlaneXZ(float dt, ida::IdaGameObject& gam
     const glm::vec3 upDir{0.0f, -1.0f, 0.0f};
 
     glm::vec3 moveDir{0.f};
-    if (state[keys.moveForward])
+    if (key == keys.moveForward)
         moveDir += forwardDir;
-    if (state[keys.moveBackward])
+    if (key == keys.moveBackward)
         moveDir -= forwardDir;
-    if (state[keys.moveRight])
+    if (key == keys.moveRight)
         moveDir += rightDir;
-    if (state[keys.moveLeft])
+    if (key == keys.moveLeft)
         moveDir -= rightDir;
-    if (state[keys.moveUp])
+    if (key == keys.moveUp)
         moveDir += upDir;
-    if (state[keys.moveDown])
+    if (key == keys.moveDown)
         moveDir -= upDir;
 
     if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {

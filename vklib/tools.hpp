@@ -15,6 +15,7 @@
 #endif
 
 using GetSurfaceCallback = std::function<vk::SurfaceKHR(vk::Instance)>;
+using KeyboardEventCallback = std::function<void()>;
 
 inline std::vector<char> ReadWholeFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);

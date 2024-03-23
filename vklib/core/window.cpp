@@ -40,16 +40,6 @@ void IdaWindow::InitWindow() {
 
 void IdaWindow::Run(std::function<void()> func) {
     while (!shouldClose_) {
-        while (SDL_PollEvent(&event_)) {
-            if (event_.type == SDL_QUIT) {
-                shouldClose_ = true;
-            }
-            if (event_.type == SDL_WINDOWEVENT && event_.window.event == SDL_WINDOWEVENT_RESIZED) {
-                width_ = event_.window.data1;
-                height_ = event_.window.data2;
-                FrameBufferResizeCallback(window_, width_, height_);
-            }
-        }
         func();
     }
 }

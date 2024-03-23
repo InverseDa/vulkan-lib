@@ -22,7 +22,7 @@ class KeyboardMovementController {
         SDL_Keycode lookDown = SDLK_DOWN;
     };
 
-    void MoveInPlaneXZ(float dt, IdaGameObject& gameObject);
+    void MoveInPlaneXZ(SDL_Keycode key, float dt, IdaGameObject& gameObject);
 
     KeyMappings keys{};
     float movementSpeed = 3.0f;
