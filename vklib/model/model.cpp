@@ -129,6 +129,7 @@ IdaModel::~IdaModel() {
 }
 
 std::unique_ptr<IdaModel> IdaModel::ImportModel(const std::string& path) {
+    IO::PrintLog(LOG_LEVEL::LOG_LEVEL_INFO, "Importing model: {}", path);
     Builder builder{};
     builder.LoadModel(path);
     return std::make_unique<IdaModel>(builder);

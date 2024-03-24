@@ -7,10 +7,8 @@ project(vulkan_lib
         DESCRIPTION "A simple vulkan library")
 
 include(cmake/FindVulkan.cmake)
-include(cmake/FindSDL2.cmake)
 include(cmake/FindGLFW.cmake)
 include(cmake/Copydll.cmake)
-# 预备阶段 找到glslc程序，用于编译shader
 include(cmake/CompileShaders.cmake)
 
 # 添加宏
@@ -34,7 +32,6 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/include)
 
 target_link_libraries(vulkan_lib PRIVATE Vulkan::Vulkan)
 target_link_libraries(vulkan_lib PRIVATE glfw)
-target_link_libraries(vulkan_lib PUBLIC SDL2)
 # for debug
 target_link_libraries(vulkan_lib PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/lib/fmtd.lib)
 

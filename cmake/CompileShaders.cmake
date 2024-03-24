@@ -1,19 +1,36 @@
-find_program(GLSLC glslc REQUIRED)
-message(STATUS "Found glscl: ${GLSLC}")
-set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
-execute_process(COMMAND ${GLSLC} --version OUTPUT_VARIABLE GLSCL_VERSION)
 
-file(GLOB TEST_SUBDIRS RELATIVE ${TEST_DIR} ${TEST_DIR}/*)
-foreach (SUBDIR ${TEST_SUBDIRS})
-    message(STATUS "    Compiling shaders in ${SUBDIR}")
-    file(GLOB_RECURSE SHADERS ${TEST_DIR}/${SUBDIR}/shaders/*.glsl)
-    foreach (SHADER ${SHADERS})
-        message(STATUS "        Compiling ${SHADER}")
-        get_filename_component(FILENAME ${SHADER} NAME)
-        get_filename_component(FILEPATH ${SHADER} DIRECTORY)
-        string(REPLACE ".glsl" ".spv" SHADER_SPV ${FILENAME})
-        execute_process(COMMAND ${GLSLC} ${SHADER} -o ${FILEPATH}/${SHADER_SPV})
-        message(STATUS "        Compiled to ${FILEPATH}/${SHADER_SPV}")
-    endforeach ()
-endforeach ()
-message(STATUS "Shaders compiled")
+############## Build SHADERS #######################
+
+# Find all vertex and fragment sources within shaders directory
+# taken from VBlancos vulkan tutorial
+# https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters/CMakeLists.txt
+find_program(GLSL_VALIDATOR glslangValidator HINTS
+        ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}
+        /usr/bin
+        /usr/local/bin
+        ${VULKAN_SDK_PATH}/Bin
+        ${VULKAN_SDK_PATH}/Bin32
+        $ENV{VULKAN_SDK}/Bin/
+        $ENV{VULKAN_SDK}/Bin32/
+)
+
+# get all .vert and .frag files in shaders directory
+file(GLOB_RECURSE GLSL_SOURCE_FILES
+        "${PROJECT_SOURCE_DIR}/shaders/*.frag"
+        "${PROJECT_SOURCE_DIR}/shaders/*.vert"
+)
+
+foreach(GLSL ${GLSL_SOURCE_FILES})
+    get_filename_component(FILE_NAME ${GLSL} NAME)
+    set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/${FILE_NAME}.spv")
+    add_custom_command(
+            OUTPUT ${SPIRV}
+            COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+            DEPENDS ${GLSL})
+    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach(GLSL)
+
+add_custom_target(
+        Shaders
+        DEPENDS ${SPIRV_BINARY_FILES}
+)
