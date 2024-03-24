@@ -17,12 +17,12 @@ void IdaCamera::SetPerspectiveProjection(float fov, float aspect, float near, fl
     projection = glm::mat4{0.f};
     projection[0][0] = 1.f / (aspect * tanHalfFov);
     projection[1][1] = 1.f / tanHalfFov;
-    projection[2][2] = far / (near - far);
+    projection[2][2] = far / (far - near);
     projection[2][3] = 1.f;
     projection[3][2] = -(far * near) / (far - near);
 }
 
-void IdaCamera::SetViewDirection(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& up) {
+void IdaCamera::SetViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up) {
     const glm::vec3 w{glm::normalize(direction)};
     const glm::vec3 u{glm::normalize(glm::cross(w, up))};
     const glm::vec3 v{glm::cross(w, u)};
@@ -56,7 +56,7 @@ void IdaCamera::SetViewDirection(const glm::vec3& position, const glm::vec3& dir
     inverseView[3][2] = position.z;
 }
 
-void IdaCamera::SetViewTarget(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up) {
+void IdaCamera::SetViewTarget( glm::vec3 position,  glm::vec3 target,  glm::vec3 up) {
     SetViewDirection(position, target - position, up);
 }
 

@@ -11,8 +11,8 @@ class IdaCamera {
     void SetOrthographicProjection(float left, float right, float bottom, float top, float near, float far);
     void SetPerspectiveProjection(float fov, float aspect, float near, float far);
 
-    void SetViewDirection(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& up);
-    void SetViewTarget(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up);
+    void SetViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up);
+    void SetViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up);
     void SetViewYXZ(glm::vec3 position, glm::vec3 rotation);
 
     const glm::mat4& GetProjection() const { return projection; }

@@ -67,6 +67,10 @@ int Application::Run() {
         renderer_->GetRenderPass(),
         globalSetLayout->GetDescriptorSetLayout(),
     };
+    //    ida::TriangleRenderSystem triangleRenderSystem{
+    //        renderer_->GetRenderPass(),
+    //        globalSetLayout->GetDescriptorSetLayout(),
+    //    };
 
     ida::IdaCamera camera{};
 
@@ -84,7 +88,7 @@ int Application::Run() {
         float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
         currentTime = newTime;
 
-        cameraController.MoveInPlaneXZ(window_->window_, frameTime, viewObject);
+        cameraController.MoveInPlaneXZ(window_->GetWindow(), frameTime, viewObject);
         camera.SetViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
         float aspect = renderer_->GetAspectRatio();
         camera.SetPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.0f);
@@ -112,6 +116,7 @@ int Application::Run() {
             {
                 simpleRenderSystem.RenderGameObjects(frameInfo);
                 pointLightSystem.Render(frameInfo);
+                //                triangleRenderSystem.Render(frameInfo);
             }
             renderer_->EndSwapChainRenderPass(commandBuffer);
             renderer_->EndFrame();
@@ -139,9 +144,21 @@ void Application::LoadGameObjects() {
     model = ida::IdaModel::ImportModel("models/quad.obj");
     auto quad = ida::IdaGameObject::CreateGameObject(ida::GameObjectType::Model);
     quad.model = model;
-    quad.transform.translation = {.5f, .5f, 0.f};
-    quad.transform.scale = {3.f, 1.f, 3.f};
+    quad.transform.translation = {0.f, .5f, 0.f};
+    quad.transform.scale = {300.f, 100.f, 300.f};
     gameObjects_.emplace(quad.GetId(), std::move(quad));
+
+    //    std::shared_ptr<ida::IdaModel> model = ida::IdaModel::CustomModel(
+    //        {
+    //            {{-1.f, -1.f, 0.f}, {1.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, {1.f, 0.f}},
+    //            {{1.f, -1.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 0.f}, {0.f, 0.f}},
+    //            {{0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}, {0.f, 0.f, 0.f}, {0.5f, 1.f}},
+    //        });
+    //    auto triangle = ida::IdaGameObject::CreateGameObject(ida::GameObjectType::Model);
+    //    triangle.model = model;
+    //    triangle.transform.translation = {0.f, 0.f, 0.f};
+    //    triangle.transform.scale = {1.f, 1.f, 1.f};
+    //    gameObjects_.emplace(triangle.GetId(), std::move(triangle));
 
     std::vector<glm::vec3> lightColors{
         {1.f, .1f, .1f},
